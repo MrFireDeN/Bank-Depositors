@@ -3,12 +3,20 @@
 #include <QString>
 #include <QDate>
 
-class Deposit{
+class Deposit
+{
 public:
-    QString accountNumber;
-    int depositType;
-    bool havePalsticCard;
+    Deposit(); // Конструктор класса
 
+    QString accountNumber; // Номер счета
+    QString typeTitle; // Тип вклада
+    QString FIO; // ФИО
+    QDate birthDate; // Дата рождения
+    double amount; // Сумма вклада
+    double interest; // Процент вклада
+    QString accrualFrequencyAlignment; // Переодичность начисления
+    QDate lastTransaction; // Последняя транзакция
+    bool plasticCardAvailability; // Наличие пластиковой карты
 };
 
 #endif // DEPOSIT_H
