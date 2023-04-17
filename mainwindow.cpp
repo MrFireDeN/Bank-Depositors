@@ -34,13 +34,34 @@ MainWindow::MainWindow(QWidget *parent) :
     deposits.append(deposit);
     deposits.append(deposit);
 
-    ui->buttonRecord2->setEnabled(false);
+    // Тип депозита
+    depositType.append(ui->termDeposit); // срочный
+    depositType.append(ui->demandDeposit); // до востребования
+    depositType.append(ui->irreducibleDeposit); //с неснижаемым остатком
+
+    // Переодчность начисления
+    accrualFrequency.append(ui->weekly); // еженедельно
+    accrualFrequency.append(ui->monthly); // ежемесячно
+    accrualFrequency.append(ui->quarterly); // ежеквартально
+    accrualFrequency.append(ui->annually); // ежегодно
+
+    ui->buttonRecord1->setEnabled(false);
     showDeposit(deposits[recordType]);
+    on_fullnameLine_textEdited();
+    on_accountNumberLine_textEdited();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+int MainWindow::whichRadioButtonChecked(QList <QRadioButton*> rd) {
+    for (int i = 0; i < rd.length(); i++) {
+        if(rd[i]->isChecked())
+            return i;
+    }
+    return 0;
 }
 
 void MainWindow::on_depositAmountNumber_valueChanged(double value)
@@ -58,27 +79,32 @@ void MainWindow::on_depositAmountNumber_valueChanged(double value)
 }
 
 void MainWindow::saveDeposit(Deposit& deposit) {
+    if (!ui->fullnameLine->hasAcceptableInput() || ui->accountNumberLine->text().length() != 20)
+        return;
+
     deposit.accountNumber = ui->accountNumberLine->text();
     deposit.amount = ui->depositAmountNumber->value();
     deposit.interest = ui->depositInterestNumber->value();
-    //deposit.accrualFrequency.setTitle(ui->accrualFrequency->title());
     deposit.FIO = ui->fullnameLine->text();
     deposit.birthDate = ui->BirthdayDate->date();
-    //deposit.Type.setTitle(ui->depositType->title());
     deposit.lastTransaction = ui->lastDepositTransactionDate->date();
-    deposit.plasticCardAvailability = ui->plasticCardAvailability;
+    deposit.plasticCardAvailability = ui->plasticCardAvailability->isChecked();
+    deposit.type = whichRadioButtonChecked(depositType);
+    deposit.accrualFrequency = whichRadioButtonChecked(accrualFrequency);
 };
 
 void MainWindow::showDeposit(Deposit& deposit) {
     ui->accountNumberLine->setText(deposit.accountNumber);
     ui->depositAmountNumber->setValue(deposit.amount);
     ui->depositInterestNumber->setValue(deposit.interest);
-    //ui->accrualFrequency->;
     ui->fullnameLine->setText(deposit.FIO);
     ui->BirthdayDate->setDate(deposit.birthDate);
-    ui->depositType->setTitle(deposit.typeTitle);
     ui->lastDepositTransactionDate->setDate(deposit.lastTransaction);
-    ui->plasticCardAvailability->setTristate(deposit.plasticCardAvailability);
+    ui->plasticCardAvailability->setChecked(deposit.plasticCardAvailability);
+    depositType[deposit.type]->setChecked(true);
+    accrualFrequency[deposit.accrualFrequency]->setChecked(true);
+    on_accountNumberLine_textEdited();
+    on_fullnameLine_textEdited();
 }
 
 void MainWindow::changeDeposit(bool &recordType) {
@@ -111,4 +137,20 @@ void MainWindow::on_buttonRecordShow_clicked()
 void MainWindow::on_buttonRecordSave_clicked()
 {
     saveDeposit(deposits[recordType]);
+}
+
+void MainWindow::on_fullnameLine_textEdited()
+{
+    if(ui->fullnameLine->hasAcceptableInput())
+        ui->fullnameError->hide();
+    else
+        ui->fullnameError->show();
+}
+
+void MainWindow::on_accountNumberLine_textEdited()
+{
+    if (ui->accountNumberLine->text().length() == 20)
+        ui->accountNumberError->hide();
+    else
+        ui->accountNumberError->show();
 }

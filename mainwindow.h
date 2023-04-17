@@ -5,6 +5,7 @@
 #include <QList>
 #include <fiovalidator.h>
 #include <deposit.h>
+#include <QRadioButton>
 
 namespace Ui {
 class MainWindow;
@@ -20,6 +21,9 @@ public:
 
     QList <Deposit> deposits;
     bool recordType = 0;
+    QList <QRadioButton*> depositType;
+    QList <QRadioButton*> accrualFrequency;
+
 
 private slots:
     void on_depositAmountNumber_valueChanged(double arg1);
@@ -34,6 +38,12 @@ private slots:
     void on_buttonRecordShow_clicked();
 
     void on_buttonRecordSave_clicked();
+
+    int whichRadioButtonChecked(QList <QRadioButton*>);
+
+    void on_fullnameLine_textEdited();
+
+    void on_accountNumberLine_textEdited();
 
 private:
     Ui::MainWindow *ui;

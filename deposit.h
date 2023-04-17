@@ -9,12 +9,12 @@ public:
     Deposit(); // Конструктор класса
 
     QString accountNumber; // Номер счета
-    QString typeTitle; // Тип вклада
+    int type; // Тип вклада
     QString FIO; // ФИО
     QDate birthDate; // Дата рождения
     double amount; // Сумма вклада
     double interest; // Процент вклада
-    QString accrualFrequencyAlignment; // Переодичность начисления
+    int accrualFrequency; // Переодичность начисления
     QDate lastTransaction; // Последняя транзакция
     bool plasticCardAvailability; // Наличие пластиковой карты
 };
