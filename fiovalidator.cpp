@@ -13,12 +13,12 @@ FIOValidator::~FIOValidator()
 
 QValidator::State FIOValidator::validate(QString &string, int &pos) const
 {
-    QRegExp reAccRu("^[А-Я][а-я]+\\s[А-Я][а-я]+\\s[А-Я][а-я]+$");
-    QRegExp reAccEn("^[A-Z][a-z]+\\s[A-Z][a-z]+\\s[A-Z][a-z]+$");
+    QRegularExpression reAccRu("^[А-Я][а-я]+\\s[А-Я][а-я]+\\s[А-Я][а-я]+$");
+    QRegularExpression reAccEn("^[A-Z][a-z]+\\s[A-Z][a-z]+\\s[A-Z][a-z]+$");
     //QRegExp reIntRu("^([А-Я]?([а-я]+)?)?(\\s)?([А-Я]?([а-я]+)?)?(\\s)?([А-Я]?([а-я]+)?)?$");
     //QRegExp reIntEn("^([A-Z]?([a-z]+)?)?(\\s)?([A-Z]?([a-z]+)?)?(\\s)?([A-Z]?([a-z]+)?)?$");
 
-    if (reAccRu.exactMatch(string) || reAccEn.exactMatch(string))
+    if (reAccRu.match(string).hasMatch() || reAccEn.match(string).hasMatch())
         return QValidator::Acceptable;
     //else if (reIntRu.exactMatch(string) || reIntEn.exactMatch(string))
     //    return QValidator::Intermediate;

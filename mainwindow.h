@@ -26,23 +26,17 @@ public:
 
 
 private slots:
-    void on_depositAmountNumber_valueChanged(double arg1);
     void saveDeposit(Deposit&);
     void showDeposit(Deposit&);
     void changeDeposit(bool&);
-
-    void on_buttonRecord1_clicked();
-
-    void on_buttonRecord2_clicked();
-
-    void on_buttonRecordShow_clicked();
-
-    void on_buttonRecordSave_clicked();
-
     int whichRadioButtonChecked(QList <QRadioButton*>);
 
+    void on_depositAmountNumber_valueChanged(double);
+    void on_buttonRecord1_clicked();
+    void on_buttonRecord2_clicked();
+    void on_buttonRecordShow_clicked();
+    void on_buttonRecordSave_clicked();
     void on_fullnameLine_textEdited();
-
     void on_accountNumberLine_textEdited();
 
 private:
