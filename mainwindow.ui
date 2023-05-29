@@ -456,6 +456,7 @@
    <font>
     <family>Slider</family>
     <pointsize>11</pointsize>
+    <weight>50</weight>
     <bold>false</bold>
    </font>
   </property>
@@ -502,36 +503,6 @@
        <item>
         <widget class="QWidget" name="widget_2" native="true">
          <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
-           <widget class="QGroupBox" name="recordSort">
-            <property name="title">
-             <string>Упорядочить по</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_7">
-             <item>
-              <widget class="QRadioButton" name="sortByType">
-               <property name="text">
-                <string>типу вклада</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="sortByBirthDate">
-               <property name="text">
-                <string>дате рождения</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="sortByFIO">
-               <property name="text">
-                <string>ФИО</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
           <item>
            <spacer name="horizontalSpacer_6">
             <property name="orientation">
@@ -624,9 +595,12 @@
            <widget class="QLineEdit" name="fullnameLine">
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>300</width>
               <height>0</height>
              </size>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
             </property>
             <property name="inputMask">
              <string/>
@@ -640,8 +614,14 @@
             <property name="echoMode">
              <enum>QLineEdit::Normal</enum>
             </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
             <property name="placeholderText">
              <string>Иванов Иван Иванович</string>
+            </property>
+            <property name="cursorMoveStyle">
+             <enum>Qt::LogicalMoveStyle</enum>
             </property>
            </widget>
           </item>
@@ -1102,6 +1082,7 @@
              <font>
               <family>MS Gothic</family>
               <pointsize>7</pointsize>
+              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -1502,6 +1483,7 @@
              <font>
               <family>MS Gothic</family>
               <pointsize>7</pointsize>
+              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -1627,7 +1609,7 @@
      <x>0</x>
      <y>0</y>
      <width>1069</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

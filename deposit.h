@@ -36,6 +36,24 @@ public:
             return obj1.FIO < obj2.FIO;
         }
     };
+
+    bool operator==(Deposit& d) {
+        if (accountNumber == d.accountNumber
+            && type == d.type
+            && FIO == d.FIO
+            && birthDate == d.birthDate
+            && amount - d.amount < 0.1
+            && interest - d.interest < 0.1
+            && accrualFrequency == d.accrualFrequency
+            && lastTransaction == d.lastTransaction
+            && plasticCardAvailability == d.plasticCardAvailability)
+            return true;
+        return false;
+    }
+
+    bool operator!=(Deposit& d) {
+        return !(operator==(d));
+    }
 };
 
 #endif // DEPOSIT_H
