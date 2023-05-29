@@ -6,7 +6,7 @@ Deposit::Deposit() {
     // Инициализация остальных полей
     FIO = "Свиридов Денис Евгеньевич"; // ФИО
     birthDate.setDate(2002, 1, 26); // Дата рождения
-    amount = 327498127491; // Сумма вклада
+    amount = 10.10; // Сумма вклада
     interest = 15.9; // Процент вклада
     accrualFrequency = 0; // Переодичность начисления
     lastTransaction = QDate::currentDate().addDays(-1); // Последняя транзакция

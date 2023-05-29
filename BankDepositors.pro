@@ -28,12 +28,14 @@ SOURCES += \
         deposit.cpp \
         fiovalidator.cpp \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        randomrecord.cpp
 
 HEADERS += \
         deposit.h \
         fiovalidator.h \
-        mainwindow.h
+        mainwindow.h \
+        randomrecord.h
 
 FORMS += \
         mainwindow.ui
