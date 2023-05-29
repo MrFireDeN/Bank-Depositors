@@ -169,29 +169,20 @@ void MainWindow::on_recordCreate_clicked()
     showDeposit(deposits[recordType]);
 
     recordSort();
+
+    ui->recordBrowserTable->selectRow(recordType);
 }
 
 // Нажата кнопка сохранить
 void MainWindow::on_recordSave_clicked()
 {
     saveDeposit(deposits[recordType]);
-
-    QTableWidgetItem *item;
-
-    Deposit deposit = deposits[recordType];
-
-    item = ui->recordBrowserTable->item(recordType, 0);
-    *item = QTableWidgetItem(deposit.accountNumber);
-    ui->recordBrowserTable->setItem(recordType, 0, item);
-    QString amount;
-    int rub = (int) deposit.amount;
-    int kop = (int) ((deposit.amount - rub) * 100 + 0.1);
-    amount = QString("%1 руб. %2 коп.").arg(rub).arg(kop);
-                 item = ui->recordBrowserTable->item(recordType, 1);
-    *item = QTableWidgetItem(amount);
-    ui->recordBrowserTable->setItem(recordType, 1, item);
-
-    showDeposit(deposits[recordType]);
+    recordSort();
+    if (recordType > 0)
+        ui->recordBrowserTable->selectRow(recordType-1);
+    else
+        ui->recordBrowserTable->selectRow(recordType+1);
+    ui->recordBrowserTable->selectRow(recordType);
 }
 
 // Проверка введенного ФИО на корректность
@@ -215,7 +206,7 @@ void MainWindow::on_accountNumberLine_textEdited()
 
 void MainWindow::on_recordBrowserTable_cellClicked(int row, int column)
 {
-    qDebug() << "Фокус на ячейке (" << row << ", " << column << ")";
+    //qDebug() << "Фокус на ячейке (" << row << ", " << column << ")";
     recordType = row;
     showDeposit(deposits[recordType]);
 }
@@ -240,6 +231,8 @@ void MainWindow::on_recordDelete_clicked()
         showDeposit(deposits[recordType]);
     else
         showDeposit(deposits[--recordType]);
+
+    ui->recordBrowserTable->selectRow(recordType);
 }
 
 
@@ -269,11 +262,10 @@ void MainWindow::on_recordBrowserButton_clicked()
         if(deposits.count() == 1)
             setUIEnabled(true);
     }
-
-    recordType = deposits.count() - 1;
     showDeposit(deposits[recordType]);
 
     recordSort();
+    ui->recordBrowserTable->selectRow(recordType);
 }
 
 bool MainWindow::compareById(const Deposit& a, const Deposit& b) {
@@ -281,6 +273,8 @@ bool MainWindow::compareById(const Deposit& a, const Deposit& b) {
 }
 
 void MainWindow::recordSort() {
+    Deposit temp = deposits[recordType];
+
     std::sort(deposits.begin(), deposits.end(), Deposit::depositComparator());
     for (int i = 0; i < deposits.count(); i++) {
 
@@ -298,6 +292,7 @@ void MainWindow::recordSort() {
         ui->recordBrowserTable->setItem(i, 1, item);
     }
 
-    recordType = deposits.count()-1;
-    showDeposit(deposits[recordType]);
+    recordType = 0;
+    while (recordType < deposits.count() && deposits[recordType] != temp)
+        recordType++;
 }
