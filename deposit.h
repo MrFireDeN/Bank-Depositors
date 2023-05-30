@@ -8,6 +8,7 @@ class Deposit
 public:
     Deposit(); // Конструктор класса
 
+    unsigned int id;
     QString accountNumber; // Номер счета
     int type; // Тип вклада
     QString FIO; // ФИО
@@ -38,15 +39,7 @@ public:
     };
 
     bool operator==(Deposit& d) {
-        if (accountNumber == d.accountNumber
-            && type == d.type
-            && FIO == d.FIO
-            && birthDate == d.birthDate
-            && amount - d.amount < 0.1
-            && interest - d.interest < 0.1
-            && accrualFrequency == d.accrualFrequency
-            && lastTransaction == d.lastTransaction
-            && plasticCardAvailability == d.plasticCardAvailability)
+        if (id == d.id)
             return true;
         return false;
     }

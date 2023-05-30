@@ -26,6 +26,7 @@ CONFIG += c++11
 
 SOURCES += \
         deposit.cpp \
+        depositDatabase.cpp \
         fiovalidator.cpp \
         main.cpp \
         mainwindow.cpp \
@@ -33,6 +34,7 @@ SOURCES += \
 
 HEADERS += \
         deposit.h \
+        depositDatabase.h \
         fiovalidator.h \
         mainwindow.h \
         randomrecord.h
