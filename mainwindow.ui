@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1069</width>
+    <width>1093</width>
     <height>793</height>
    </rect>
   </property>
@@ -456,7 +456,6 @@
    <font>
     <family>Slider</family>
     <pointsize>11</pointsize>
-    <weight>50</weight>
     <bold>false</bold>
    </font>
   </property>
@@ -479,7 +478,7 @@
       <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
         <widget class="QWidget" name="recordBrowser1" native="true">
-         <layout class="QVBoxLayout" name="verticalLayout_8">
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
           <item>
            <widget class="QLabel" name="recordBrowserLabel">
             <property name="text">
@@ -501,29 +500,37 @@
         </widget>
        </item>
        <item>
-        <widget class="QWidget" name="widget_2" native="true">
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
-           <spacer name="horizontalSpacer_6">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+        <widget class="QWidget" name="fileButtons" native="true">
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <widget class="QPushButton" name="openFileButton">
+            <property name="text">
+             <string>Открыть</string>
             </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="saveAsFileButton">
+            <property name="text">
+             <string>Сохранить как</string>
             </property>
-           </spacer>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="saveFileButon">
+            <property name="text">
+             <string>Сохнанить</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="recordBrowserButton">
+            <property name="text">
+             <string>Создать 10 записей</string>
+            </property>
+           </widget>
           </item>
          </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="recordBrowserButton">
-         <property name="text">
-          <string>Создать 10 записей</string>
-         </property>
         </widget>
        </item>
       </layout>
@@ -1082,7 +1089,6 @@
              <font>
               <family>MS Gothic</family>
               <pointsize>7</pointsize>
-              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -1483,7 +1489,6 @@
              <font>
               <family>MS Gothic</family>
               <pointsize>7</pointsize>
-              <weight>50</weight>
               <bold>false</bold>
              </font>
             </property>
@@ -1608,8 +1613,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1069</width>
-     <height>21</height>
+     <width>1093</width>
+     <height>24</height>
     </rect>
    </property>
   </widget>

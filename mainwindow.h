@@ -7,6 +7,8 @@
 #include <deposit.h>
 #include <QRadioButton>
 #include <QTableWidget>
+#include "depositDatabase.h"
+#include "randomrecord.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,8 +26,8 @@ public:
     int recordType = 0;
     QList <QRadioButton*> depositType;
     QList <QRadioButton*> accrualFrequency;
-
-
+    DepositDatabase dd;
+    Deposit deposit;
 
 private slots:
     void saveDeposit(Deposit&);
@@ -33,7 +35,7 @@ private slots:
     int whichRadioButtonChecked(QList <QRadioButton*>);
     void setUIEnabled(bool);
     void recordSort();
-    bool compareById(const Deposit&, const Deposit&);
+    void addRow(Deposit&);
 
     void on_depositAmountNumber_valueChanged(double);
     void on_recordSave_clicked();
