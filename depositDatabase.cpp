@@ -5,22 +5,11 @@ DepositDatabase::DepositDatabase()
 
 }
 
+// Добавить элемент
 int DepositDatabase::add(const Deposit& record) {
     QVector<Deposit>::const_iterator i = database.constBegin();
 
-    while(i != database.constEnd() &&
-           i->type <= record.type)
-        ++i;
-
-    while(i != database.constEnd() &&
-           (i+1)->type == record.type &&
-           i->FIO <= record.FIO)
-        ++i;
-
-    while(i != database.constEnd() &&
-           (i+1)->type == record.type &&
-           (i+1)->FIO == record.FIO &&
-           i->birthDate <= record.birthDate)
+    while (i != database.constEnd() && *i > record)
         ++i;
 
     if (i == database.constEnd()) {
@@ -32,21 +21,17 @@ int DepositDatabase::add(const Deposit& record) {
 
     database.insert(i, record);
 
-//    if (i == database.constBegin())
-//        return 0;
-
-
     return row;
 }
 
-// Добавление элемента
+// Добавить элемент в базу данных
 int DepositDatabase::append(Deposit& record) {
     record.id = ++id;
 
     return add(record);
 }
 
-// Удаление элементов
+// Удаленить элемент из базы данных
 void DepositDatabase::remove(unsigned int id) {
     QVector <Deposit>::const_iterator i;
 
@@ -58,7 +43,7 @@ void DepositDatabase::remove(unsigned int id) {
     }
 }
 
-// Изменить запись в базе данных
+// Обновить запись в базе данных
 int DepositDatabase::update(const Deposit& record) {
     remove(record.id);
 
@@ -81,7 +66,7 @@ const QVector<DepositDatabase::RecordRow> DepositDatabase::records() const {
     return rr;
 }
 
-// Запись для чтения
+// Открыть запись для чтения
 void DepositDatabase::record(unsigned int id, Deposit &record) const {
     QVector<Deposit>::const_iterator i = database.constBegin();
 
@@ -92,6 +77,57 @@ void DepositDatabase::record(unsigned int id, Deposit &record) const {
         return;
 
     record = *i;
+}
+
+// Сохранить файл базы данных
+bool DepositDatabase::save(QString filename) {
+    // провека названия
+    if (filename.isEmpty() || database.empty())
+        return false;
+
+    QFile MyFile(filename);
+
+    if (MyFile.open(QIODevice::WriteOnly)) {
+        QDataStream output(&MyFile);
+        QVector<Deposit>::iterator i;
+
+        for (i = database.end()-1; i != database.begin(); --i) {
+            output << *i;
+        }
+        output << *database.constBegin();
+
+        MyFile.close();
+
+        return true;
+    }
+
+    return false;
+}
+
+// Загрузить файл базы данных
+bool DepositDatabase::load(QString filename) {
+    // провека названия
+    if (filename.isEmpty())
+        return false;
+
+    QFile MyFile(filename);
+    if (MyFile.open(QIODevice::ReadOnly)) {
+        database.clear();
+
+        QDataStream output(&MyFile);
+        Deposit d;
+
+        while (!output.atEnd()) {
+            output >> d;
+            database.append(d);
+        }
+
+        MyFile.close();
+
+        return true;
+    }
+
+    return false;
 }
 
 // Кол-во элементов

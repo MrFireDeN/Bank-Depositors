@@ -2,7 +2,10 @@
 #define RECORD_H
 
 #include <QVector>
+#include <QFile>
 #include "deposit.h"
+#include <QDate>
+#include <QDataStream>
 
 class DepositDatabase
 {

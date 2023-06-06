@@ -37,12 +37,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->recordBrowserTable->setColumnWidth(0, 200);
     ui->recordBrowserTable->setColumnWidth(1, 90);
 
-
-    // Создание депозитов
-    //Deposit deposit;
-    //deposits.append(deposit);
-    //deposits.append(deposit);
-
     // Тип депозита
     depositType.append(ui->termDeposit); // срочный
     depositType.append(ui->demandDeposit); // до востребования
@@ -55,8 +49,6 @@ MainWindow::MainWindow(QWidget *parent) :
     accrualFrequency.append(ui->annually); // ежегодно
 
     // Вывод интерфейса
-    //ui->buttonRecord1->setEnabled(false);
-    //showDeposit(deposit);
     on_fullnameLine_textEdited();
     on_accountNumberLine_textEdited();
 
@@ -71,7 +63,7 @@ MainWindow::~MainWindow()
 }
 
 
-// Сохранение записи депозита
+// Сохраненить запись из браузера
 void MainWindow::saveDeposit(Deposit& deposit) {
     if (!ui->fullnameLine->hasAcceptableInput() || ui->accountNumberLine->text().length() != 20)
         return;
@@ -87,7 +79,7 @@ void MainWindow::saveDeposit(Deposit& deposit) {
     deposit.accrualFrequency = whichRadioButtonChecked(accrualFrequency);
 };
 
-// Показать запись депозита
+// Показать запись из браузера
 void MainWindow::showDeposit(Deposit& deposit) {
     ui->accountNumberLine->setText(deposit.accountNumber);
     ui->depositAmountNumber->setValue(deposit.amount);
@@ -102,6 +94,102 @@ void MainWindow::showDeposit(Deposit& deposit) {
     on_fullnameLine_textEdited();
 }
 
+// Создать запись
+void MainWindow::on_recordCreate_clicked()
+{
+    deposit = *(new Deposit); // задаёт значение записи по умолчанию
+
+    recordType = dd.append(deposit); // добавляет запись в базу данных
+    addRow(deposit); // добавляет новую запись в браузер
+
+    // Показывает интерфейс при наличии записей
+    if(dd.count() == 1)
+        setUIEnabled(true);
+
+    showDeposit(deposit); // выводит брауез в виджеты
+}
+
+// Сохранить запись
+void MainWindow::on_recordSave_clicked()
+{
+    saveDeposit(deposit); // сохраняет значение из виджетов в запись
+    ui->recordBrowserTable->removeRow(recordType); // удаляет прошлую запись из браузера
+    recordType = dd.update(deposit); // обновляет запись в базе данных
+    addRow(deposit); // добавляет новую запись в браузер
+}
+
+// Удалить запись
+void MainWindow::on_recordDelete_clicked()
+{
+    dd.remove(deposit.id); // удаляет запись из базы данных
+    ui->recordBrowserTable->removeRow(recordType); // удаляет строку
+
+    // проверка базы данных на пустоту
+    if (dd.count() == 0){
+        setUIEnabled(false);
+        return;
+    }
+
+    // фокус на предыдущию запись если, прошлая была последней
+    if (recordType == dd.count())
+        recordType--;
+
+    on_recordBrowserTable_cellClicked(recordType, 0); // фокус на запись
+}
+
+// Выбрать запись из браузера
+void MainWindow::on_recordBrowserTable_cellClicked(int row, int column)
+{
+    recordType = row; // присваивание строки
+
+    // нахождение элемента по id
+    unsigned int id = ui->recordBrowserTable->item(recordType, 0)->data(Qt::UserRole).toInt();
+    dd.record(id, deposit);
+    showDeposit(deposit);
+
+    ui->recordBrowserTable->selectRow(recordType); // фокус на строку
+}
+
+// Добавить 10 случайных записей
+void MainWindow::on_recordBrowserButton_clicked()
+{
+    RandomRecord rr;
+
+    for (int i = 0; i < 10; i++) {
+        rr.setRecord(deposit);
+        recordType = dd.append(deposit);
+        addRow(deposit);
+
+        if(dd.count() == 1)
+            setUIEnabled(true);
+    }
+
+    // выделить последний элемент браузера
+    on_recordBrowserTable_cellClicked(dd.count()-1, 0);
+    ui->recordBrowserTable->selectRow(dd.count()-1);
+    showDeposit(deposit);
+}
+
+// Добавить строку в браузер
+void MainWindow::addRow(Deposit &deposit) {
+    ui->recordBrowserTable->insertRow(recordType); // вставка новой строки
+
+    QTableWidgetItem *item; // создание элемента
+
+    // заполнение строки
+    item = new QTableWidgetItem(deposit.accountNumber);
+    ui->recordBrowserTable->setItem(recordType, 0, item);
+    QString amount;
+    int rub = (int) deposit.amount;
+    int kop = (int) ((deposit.amount - rub) * 100 + 0.1);
+    amount = QString("%1 руб. %2 коп.").arg(rub).arg(kop);
+                 item = new QTableWidgetItem(amount);
+    ui->recordBrowserTable->setItem(recordType, 1, item);
+    ui->recordBrowserTable->item(recordType, 0)->setData(Qt::UserRole, deposit.id);
+
+    ui->recordBrowserTable->selectRow(recordType); // выделение строки
+}
+
 // Поиск выбранного элемента в QGroupBox
 int MainWindow::whichRadioButtonChecked(QList <QRadioButton*> rd) {
     for (int i = 0; i < rd.length(); i++) {
@@ -109,20 +197,6 @@ int MainWindow::whichRadioButtonChecked(QList <QRadioButton*> rd) {
             return i;
     }
     return 0;
-}
-
-// Видимость полей редактирования
-void MainWindow::setUIEnabled(bool x){
-    ui->accountNumber->setEnabled(x);
-    ui->accrualFrequency->setEnabled(x);
-    ui->depositAmount->setEnabled(x);
-    ui->depositInterest->setEnabled(x);
-    ui->depositType->setEnabled(x);
-    ui->lastDepositTransaction->setEnabled(x);
-    ui->passportData->setEnabled(x);
-    ui->plasticCardAvailability->setEnabled(x);
-    ui->recordSave->setEnabled(x);
-    ui->recordDelete->setEnabled(x);
 }
 
 // Если сумму депозита изменили
@@ -138,39 +212,6 @@ void MainWindow::on_depositAmountNumber_valueChanged(double value)
         ui->accrualFrequency->setEnabled(true);
     }
     ui->lastDepositTransactionDate->setDate(QDate::currentDate());
-}
-
-
-// нажата кнопка создать
-void MainWindow::on_recordCreate_clicked()
-{
-    deposit = *(new Deposit);
-
-    recordType = dd.append(deposit);
-
-    addRow(deposit);
-
-    if(dd.count() == 1)
-        setUIEnabled(true);
-
-    showDeposit(deposit);
-}
-
-// Нажата кнопка сохранить
-void MainWindow::on_recordSave_clicked()
-{
-    saveDeposit(deposit);
-    ui->recordBrowserTable->removeRow(recordType);
-    recordType = dd.update(deposit);
-    addRow(deposit);
-
-
-//    recordSort();
-//    if (recordType > 0)
-//        ui->recordBrowserTable->selectRow(recordType-1);
-//    else
-//        ui->recordBrowserTable->selectRow(recordType+1);
-//    ui->recordBrowserTable->selectRow(recordType);
 }
 
 // Проверка введенного ФИО на корректность
@@ -191,117 +232,69 @@ void MainWindow::on_accountNumberLine_textEdited()
         ui->accountNumberError->show();
 }
 
-
-void MainWindow::on_recordBrowserTable_cellClicked(int row, int column)
-{
-//    //qDebug() << "Фокус на ячейке (" << row << ", " << column << ")";
-    recordType = row;
-
-    unsigned int id = ui->recordBrowserTable->item(recordType, 0)->data(Qt::UserRole).toInt();
-
-    dd.record(id, deposit);
-
-    showDeposit(deposit);
+// Сделать полей редактирования (не)активными
+void MainWindow::setUIEnabled(bool x){
+    ui->accountNumber->setEnabled(x);
+    ui->accrualFrequency->setEnabled(x);
+    ui->depositAmount->setEnabled(x);
+    ui->depositInterest->setEnabled(x);
+    ui->depositType->setEnabled(x);
+    ui->lastDepositTransaction->setEnabled(x);
+    ui->passportData->setEnabled(x);
+    ui->plasticCardAvailability->setEnabled(x);
+    ui->recordSave->setEnabled(x);
+    ui->recordDelete->setEnabled(x);
 }
 
-
-void MainWindow::on_recordDelete_clicked()
+// Отскрыть файл базы данных
+void MainWindow::on_openFileButton_clicked()
 {
-//    QTableWidgetItem *item;
-//    item = ui->recordBrowserTable->item(recordType, 0);
-//    delete item;
-//    item = ui->recordBrowserTable->item(recordType, 1);
-//    delete item;
-//    deposits.remove(recordType);
-//    ui->recordBrowserTable->removeRow(recordType);
+    Filename = QFileDialog::getOpenFileName(this,
+                QString("Открыть файл"),
+                QString(),
+                QString("База депозитов (*.dd);;"
+                        "Все файлы (*.*)"));
 
-//    if (deposits.count() == 0){
-//        setUIEnabled(false);
-//        return;
-//    }
+    if (dd.load(Filename)) {
+        ui->recordBrowserTable->clear();
+        ui->recordBrowserTable->setRowCount(0);
 
-//    if (recordType < deposits.count())
-//        showDeposit(deposits[recordType]);
-//    else
-//        showDeposit(deposits[--recordType]);
+        QVector<DepositDatabase::RecordRow> rr = dd.records();
 
-//    ui->recordBrowserTable->selectRow(recordType);
-}
+        for (int i = 0; i < rr.count(); i++) {
+            deposit.id = rr[i].id;
+            deposit.accountNumber = rr[i].accountNumber;
+            deposit.amount = rr[i].amount;
+            recordType = i;
+            addRow(deposit);
+        }
 
-
-void MainWindow::on_recordBrowserButton_clicked()
-{
-    RandomRecord rr;
-    srand(time(0));
-
-
-    for (int i = 0; i < 10; i++) {
-        rr.setRecord(deposit);
-        recordType = dd.append(deposit);
-        addRow(deposit);
-
-        if(dd.count() == 1)
+        if(dd.count() > 0)
             setUIEnabled(true);
+
+        //recordType = dd.count() -1;
+        on_recordBrowserTable_cellClicked(recordType, 0);
+
+        QMessageBox::information(nullptr, "Успех", "Файл успешно загружен");
     }
-
-    on_recordBrowserTable_cellClicked(dd.count()-1, 0);
-    ui->recordBrowserTable->selectRow(dd.count()-1);
-
-    showDeposit(deposit);
-
-//    RandomRecord rr;
-//    srand(time(0));
-
-//    for (int i = 0; i < 10; i++) {
-//        Deposit deposit;
-//        rr.setRecord(deposit);
-//        deposits.append(deposit);
-
-//        ui->recordBrowserTable->setRowCount(deposits.count());
-
-//        QTableWidgetItem *item;
-
-//        item = new QTableWidgetItem(deposit.accountNumber);
-//        ui->recordBrowserTable->setItem(deposits.count()-1, 0, item);
-//        QString amount;
-//        int rub = (int) deposit.amount;
-//        int kop = (int) ((deposit.amount - rub) * 100 + 0.1);
-//        amount = QString("%1 руб. %2 коп.").arg(rub).arg(kop);
-//                     item = new QTableWidgetItem(amount);
-//        ui->recordBrowserTable->setItem(deposits.count()-1, 1, item);
-
-//        if(deposits.count() == 1)
-//            setUIEnabled(true);
-//    }
-//    showDeposit(deposits[recordType]);
-
-//    recordSort();
-//    ui->recordBrowserTable->selectRow(recordType);
 }
 
-void MainWindow::addRow(Deposit &deposit) {
-    ui->recordBrowserTable->insertRow(recordType);
-
-    QTableWidgetItem *item;
-
-    item = new QTableWidgetItem(deposit.accountNumber);
-    ui->recordBrowserTable->setItem(recordType, 0, item);
-    QString amount;
-    int rub = (int) deposit.amount;
-    int kop = (int) ((deposit.amount - rub) * 100 + 0.1);
-    amount = QString("%1 руб. %2 коп.").arg(rub).arg(kop);
-                 item = new QTableWidgetItem(amount);
-    ui->recordBrowserTable->setItem(recordType, 1, item);
-
-    ui->recordBrowserTable->item(recordType, 0)->setData(Qt::UserRole, deposit.id);
-    ui->recordBrowserTable->selectRow(recordType);
+// Сохранить файл базы данных
+void MainWindow::on_saveFileButon_clicked()
+{
+    if (!dd.save(Filename))
+        QMessageBox::information(nullptr, "Ошибка", "Успех!");
 }
 
-void MainWindow::recordSort() {
-    //Deposit temp = deposits[recordType];
 
-    //std::sort(deposits.begin(), deposits.end(), Deposit::depositComparator());
-    //recordType = dd.update();
-//    while (recordType < deposits.count() && deposits[recordType] != temp)
-//        recordType++;
+void MainWindow::on_saveAsFileButton_clicked()
+{
+    Filename = QFileDialog::getSaveFileName(this,
+                                            QString("Сохранить файл"),
+                                            QString(),
+                                            QString("База депозитов (*.dd)"));
+
+    if (dd.save(Filename))
+        QMessageBox::information(nullptr, "Успех", "Успешное сохранение файла");
 }
+

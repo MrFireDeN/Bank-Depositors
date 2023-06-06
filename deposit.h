@@ -2,6 +2,8 @@
 #define DEPOSIT_H
 #include <QString>
 #include <QDate>
+#include <QFile>
+#include <QDataStream>
 
 class Deposit
 {
@@ -19,33 +21,52 @@ public:
     QDate lastTransaction; // Последняя транзакция
     bool plasticCardAvailability; // Наличие пластиковой карты
 
-//    struct depositComparator
-//    {
-//        bool operator()(const Deposit& obj1, const Deposit& obj2) const {
-//            if (obj1.type < obj2.type) {
-//                return true;
-//            }
-//            if (obj1.type > obj2.type) {
-//                return false;
-//            }
+    bool operator>(const Deposit& d) const {
+        if (d.type != type)
+            return d.type > type;
 
-//            if (obj1.birthDate < obj2.birthDate)
-//                return true;
-//            if (obj1.birthDate > obj2.birthDate)
-//                return false;
+        if (d.birthDate != birthDate)
+            return d.birthDate > birthDate;
 
-//            return obj1.FIO < obj2.FIO;
-//        }
-//    };
+        return d.FIO >= FIO;
+    }
 
     bool operator==(Deposit& d) {
-        if (id == d.id)
-            return true;
-        return false;
+        return id == d.id;
     }
 
     bool operator!=(Deposit& d) {
-        return !(operator==(d));
+        return id != d.id;
+    }
+
+    friend QDataStream & operator<<(QDataStream & out, const Deposit & d) {
+        out << d.id
+            << d.accountNumber
+            << d.type
+            << d.FIO
+            << d.birthDate
+            << d.amount
+            << d.interest
+            << d.accrualFrequency
+            << d.lastTransaction
+            << d.plasticCardAvailability;
+
+        return out;
+    }
+
+    friend QDataStream & operator>>(QDataStream & in, Deposit & d) {
+        in  >> d.id
+            >> d.accountNumber
+            >> d.type
+            >> d.FIO
+            >> d.birthDate
+            >> d.amount
+            >> d.interest
+            >> d.accrualFrequency
+            >> d.lastTransaction
+            >> d.plasticCardAvailability;
+
+        return in;
     }
 };
 

@@ -9,6 +9,8 @@
 #include <QTableWidget>
 #include "depositDatabase.h"
 #include "randomrecord.h"
+#include <QFileDialog>>
+#include <QMessageBox>
 
 namespace Ui {
 class MainWindow;
@@ -28,13 +30,13 @@ public:
     QList <QRadioButton*> accrualFrequency;
     DepositDatabase dd;
     Deposit deposit;
+    QString Filename = "Deposit.dd";
 
 private slots:
     void saveDeposit(Deposit&);
     void showDeposit(Deposit&);
     int whichRadioButtonChecked(QList <QRadioButton*>);
     void setUIEnabled(bool);
-    void recordSort();
     void addRow(Deposit&);
 
     void on_depositAmountNumber_valueChanged(double);
@@ -45,6 +47,13 @@ private slots:
     void on_recordBrowserTable_cellClicked(int row, int column);
     void on_recordDelete_clicked();
     void on_recordBrowserButton_clicked();
+
+    void on_saveFileButon_clicked();
+
+
+    void on_openFileButton_clicked();
+
+    void on_saveAsFileButton_clicked();
 
 private:
     Ui::MainWindow *ui;
