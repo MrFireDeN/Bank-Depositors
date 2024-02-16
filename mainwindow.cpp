@@ -282,6 +282,10 @@ void MainWindow::on_openFileButton_clicked()
 // Сохранить файл базы данных
 void MainWindow::on_saveFileButon_clicked()
 {
+    if (Filename.isEmpty()) {
+        on_saveAsFileButton_clicked();
+        return;
+    }
     if (!dd.save(Filename))
         QMessageBox::information(nullptr, "Ошибка", "Успех!");
 }
