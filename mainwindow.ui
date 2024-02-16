@@ -499,40 +499,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QWidget" name="fileButtons" native="true">
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="0">
-           <widget class="QPushButton" name="openFileButton">
-            <property name="text">
-             <string>Открыть</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QPushButton" name="saveAsFileButton">
-            <property name="text">
-             <string>Сохранить как</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="saveFileButon">
-            <property name="text">
-             <string>Сохнанить</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QPushButton" name="recordBrowserButton">
-            <property name="text">
-             <string>Создать 10 записей</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
       </layout>
      </widget>
     </item>
@@ -1344,6 +1310,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="recordBrowserButton">
+            <property name="text">
+             <string>Создать 10 записей</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -1614,7 +1587,7 @@
      <x>0</x>
      <y>0</y>
      <width>1093</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
