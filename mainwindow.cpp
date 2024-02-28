@@ -56,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     srand(time(0));
 
-    on_openFileButton_clicked();
+    openFile();
 }
 
 MainWindow::~MainWindow()
@@ -250,15 +250,9 @@ void MainWindow::setUIEnabled(bool x){
     ui->recordDelete->setEnabled(x);
 }
 
-// Отскрыть файл базы данных
-void MainWindow::on_openFileButton_clicked()
-{
-    Filename = QFileDialog::getOpenFileName(this,
-                QString("Открыть файл"),
-                QString(),
-                QString("База депозитов (*.dd);;"
-                        "Все файлы (*.*)"));
 
+// Октрывает файл базы данных
+void MainWindow::openFile(){
     if (dd.load(Filename)) {
         ui->recordBrowserTable->clear();
         ui->recordBrowserTable->setRowCount(0);
@@ -278,9 +272,22 @@ void MainWindow::on_openFileButton_clicked()
 
         //recordType = dd.count() -1;
         on_recordBrowserTable_cellClicked(recordType, 0);
-
-        QMessageBox::information(nullptr, "Успех", "Файл успешно загружен");
     }
+    else {
+        QMessageBox::information(nullptr, "Ошибка", "Файла не существует");
+    }
+}
+
+// Открыть файл базы данных
+void MainWindow::on_openFileButton_clicked()
+{
+    Filename = QFileDialog::getOpenFileName(this,
+                QString("Открыть файл"),
+                QString(),
+                QString("База депозитов (*.dd);;"
+                        "Все файлы (*.*)"));
+
+    openFile();
 }
 
 // Сохранить файл базы данных

@@ -30,7 +30,7 @@ public:
     QList <QRadioButton*> accrualFrequency;
     DepositDatabase dd;
     Deposit deposit;
-    QString Filename;
+    QString Filename = "main.dd";
 
 private slots:
     void saveDeposit(Deposit&);
@@ -48,11 +48,9 @@ private slots:
     void on_recordDelete_clicked();
     void on_recordBrowserButton_clicked();
 
-    void on_saveFileButon_clicked();
-
-
+    void openFile();
     void on_openFileButton_clicked();
-
+    void on_saveFileButon_clicked();
     void on_saveAsFileButton_clicked();
 
 private:
