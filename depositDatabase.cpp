@@ -80,7 +80,25 @@ void DepositDatabase::record(unsigned int id, Deposit &record) const {
 }
 
 // Сохранить файл базы данных
-bool DepositDatabase::save(QString filename) {
+bool DepositDatabase::save() {
+    // Создание файла
+    HANDLE myFile = CreateFile(
+        FILENAME,               // Имя файла
+        GENERIC_READ,           // Желаемый доступ к файлу (здесь только чтение)
+        FILE_SHARE_READ,        // Режим разделения (можно открывать другим процессам для чтения)
+        NULL,                   // Атрибуты безопасности (не используется)
+        OPEN_EXISTING,          // Режим открытия (открываем существующий файл)
+        FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
+        NULL                    // Дескриптор файла-шаблона (не используется)
+        );
+
+    // Проверка на успешность открытия файла
+    if (myFile == INVALID_HANDLE_VALUE)
+        return false;
+
+    return true;
+
+    /*
     // провека названия
     if (filename.isEmpty() || database.empty())
         return false;
@@ -102,10 +120,31 @@ bool DepositDatabase::save(QString filename) {
     }
 
     return false;
+    */
 }
 
 // Загрузить файл базы данных
-bool DepositDatabase::load(QString filename) {
+bool DepositDatabase::load() {
+    // Создание файла
+    HANDLE myFile = CreateFile(
+        FILENAME,               // Имя файла
+        GENERIC_WRITE,          // Желаемый доступ к файлу (здесь только запись)
+        0,                      // Режим разделения (нельзя открывать другим процессам)
+        NULL,                   // Атрибуты безопасности (не используется)
+        CREATE_ALWAYS,          // Режим создания (создаем новый файл или перезаписываем существующий)
+        FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
+        NULL                    // Дескриптор файла-шаблона (не используется)
+        );
+
+    // Проверка на успешность открытия файла
+    if (myFile == INVALID_HANDLE_VALUE)
+        return false;
+
+    CloseHandle(myFile);
+
+    return true;
+
+    /*
     // провека названия
     if (filename.isEmpty())
         return false;
@@ -128,6 +167,7 @@ bool DepositDatabase::load(QString filename) {
     }
 
     return false;
+    */
 }
 
 // Кол-во элементов

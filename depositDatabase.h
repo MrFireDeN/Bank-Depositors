@@ -6,6 +6,7 @@
 #include "deposit.h"
 #include <QDate>
 #include <QDataStream>
+#include <Windows.h>
 
 class DepositDatabase
 {
@@ -25,12 +26,13 @@ public:
     int update(const Deposit& record);
     void record(unsigned int id, Deposit& record) const;
     const QVector<RecordRow> records() const;
-    bool save(QString filename);
-    bool load(QString filename);
+    bool save();
+    bool load();
     void clear();
     bool isModified() const;
 
 private:
+    const LPCTSTR FILENAME = TEXT("main.dd");
     QVector<Deposit> database;
     int add(const Deposit& record);
 
