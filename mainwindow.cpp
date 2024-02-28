@@ -55,10 +55,14 @@ MainWindow::MainWindow(QWidget *parent) :
     setUIEnabled(false);
 
     srand(time(0));
+
+    on_openFileButton_clicked();
 }
 
 MainWindow::~MainWindow()
 {
+    on_saveFileButon_clicked();
+
     delete ui;
 }
 
