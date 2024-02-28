@@ -49,6 +49,7 @@ private slots:
     void on_recordBrowserButton_clicked();
 
     void openFile();
+    void saveFile();
     void on_openFileButton_clicked();
     void on_saveFileButon_clicked();
     void on_saveAsFileButton_clicked();

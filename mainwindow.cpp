@@ -61,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    on_saveFileButon_clicked();
+    saveFile();
 
     delete ui;
 }
@@ -278,6 +278,12 @@ void MainWindow::openFile(){
     }
 }
 
+// Сохранить файл базы данных
+void MainWindow::saveFile() {
+    if (!dd.save(Filename))
+        QMessageBox::information(nullptr, "Ошибка", "Файл не сохранен");
+}
+
 // Открыть файл базы данных
 void MainWindow::on_openFileButton_clicked()
 {
@@ -297,8 +303,8 @@ void MainWindow::on_saveFileButon_clicked()
         on_saveAsFileButton_clicked();
         return;
     }
-    if (!dd.save(Filename))
-        QMessageBox::information(nullptr, "Ошибка", "Успех!");
+
+    saveFile();
 }
 
 
@@ -309,7 +315,7 @@ void MainWindow::on_saveAsFileButton_clicked()
                                             QString(),
                                             QString("База депозитов (*.dd)"));
 
-    if (dd.save(Filename))
-        QMessageBox::information(nullptr, "Успех", "Успешное сохранение файла");
+
+    saveFile();
 }
 
