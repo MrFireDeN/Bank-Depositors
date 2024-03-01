@@ -253,7 +253,7 @@ void MainWindow::setUIEnabled(bool x){
 
 // Октрывает файл базы данных
 void MainWindow::openFile(){
-    if (dd.load(Filename)) {
+    if (dd.load()) {
         ui->recordBrowserTable->clear();
         ui->recordBrowserTable->setRowCount(0);
 
@@ -280,42 +280,42 @@ void MainWindow::openFile(){
 
 // Сохранить файл базы данных
 void MainWindow::saveFile() {
-    if (!dd.save(Filename))
+    if (!dd.save())
         QMessageBox::information(nullptr, "Ошибка", "Файл не сохранен");
 }
 
-// Открыть файл базы данных
-void MainWindow::on_openFileButton_clicked()
-{
-    Filename = QFileDialog::getOpenFileName(this,
-                QString("Открыть файл"),
-                QString(),
-                QString("База депозитов (*.dd);;"
-                        "Все файлы (*.*)"));
+//// Открыть файл базы данных
+//void MainWindow::on_openFileButton_clicked()
+//{
+//    Filename = QFileDialog::getOpenFileName(this,
+//                QString("Открыть файл"),
+//                QString(),
+//                QString("База депозитов (*.dd);;"
+//                        "Все файлы (*.*)"));
 
-    openFile();
-}
+//    openFile();
+//}
 
-// Сохранить файл базы данных
-void MainWindow::on_saveFileButon_clicked()
-{
-    if (Filename.isEmpty()) {
-        on_saveAsFileButton_clicked();
-        return;
-    }
+//// Сохранить файл базы данных
+//void MainWindow::on_saveFileButon_clicked()
+//{
+//    if (Filename.isEmpty()) {
+//        on_saveAsFileButton_clicked();
+//        return;
+//    }
 
-    saveFile();
-}
-
-
-void MainWindow::on_saveAsFileButton_clicked()
-{
-    Filename = QFileDialog::getSaveFileName(this,
-                                            QString("Сохранить файл"),
-                                            QString(),
-                                            QString("База депозитов (*.dd)"));
+//    saveFile();
+//}
 
 
-    saveFile();
-}
+//void MainWindow::on_saveAsFileButton_clicked()
+//{
+//    Filename = QFileDialog::getSaveFileName(this,
+//                                            QString("Сохранить файл"),
+//                                            QString(),
+//                                            QString("База депозитов (*.dd)"));
+
+
+//    saveFile();
+//}
 

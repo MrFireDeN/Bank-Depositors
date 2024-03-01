@@ -7,19 +7,34 @@
 
 class Deposit
 {
+
 public:
     Deposit(); // Конструктор класса
 
-    unsigned int id;
-    QString accountNumber; // Номер счета
-    int type; // Тип вклада
-    QString FIO; // ФИО
-    QDate birthDate; // Дата рождения
-    double amount; // Сумма вклада
-    double interest; // Процент вклада
-    int accrualFrequency; // Переодичность начисления
-    QDate lastTransaction; // Последняя транзакция
-    bool plasticCardAvailability; // Наличие пластиковой карты
+    unsigned int id;                // id
+    QString accountNumber;          // Номер счета
+    int type;                       // Тип вклада
+    QString FIO;                    // ФИО
+    QDate birthDate;                // Дата рождения
+    double amount;                  // Сумма вклада
+    double interest;                // Процент вклада
+    int accrualFrequency;           // Переодичность начисления
+    QDate lastTransaction;          // Последняя транзакция
+    bool plasticCardAvailability;   // Наличие пластиковой карты
+
+
+    struct D {
+        unsigned int id;                // id
+        char accountNumber[21];         // Номер счета
+        int type;                       // Тип вклада
+        char FIO[46];                   // ФИО
+        char birthDate[11];             // Дата рождения
+        double amount;                  // Сумма вклада
+        double interest;                // Процент вклада
+        int accrualFrequency;           // Переодичность начисления
+        char lastTransaction[11];       // Последняя транзакция
+        bool plasticCardAvailability;   // Наличие пластиковой карты
+    };
 
     bool operator>(const Deposit& d) const {
         if (d.type != type)
@@ -67,6 +82,46 @@ public:
             >> d.plasticCardAvailability;
 
         return in;
+    }
+
+    static D depositToStruct(Deposit &deposit) {
+        D d;
+
+        // id
+        d.id = deposit.id;
+
+        // Номер счета
+        std::strcpy(d.accountNumber, deposit.accountNumber.toStdString().c_str());
+        d.accountNumber[sizeof(d.accountNumber)-1] = '\0';
+
+        // ФИО
+        std::strcpy(d.FIO, deposit.FIO.toStdString().c_str());
+        d.FIO[sizeof(d.FIO)-1] = '\0';
+
+        // Тип вклада
+        d.type = deposit.type;
+
+        // Дата рождения
+        std::strcpy(d.birthDate, deposit.birthDate.toString().toStdString().c_str());
+        d.birthDate[sizeof(d.birthDate)-1] = '\0';
+
+        // Сумма вклада
+        d.amount = deposit.amount;
+
+        // Процент вклада
+        d.interest = deposit.interest;
+
+        // Переодичность начисления
+        d.accrualFrequency = deposit.accrualFrequency;
+
+        // Последняя транзакция
+        std::strcpy(d.lastTransaction, deposit.lastTransaction.toString().toStdString().c_str());
+        d.lastTransaction[sizeof(d.lastTransaction)-1] = '\0';
+
+        // Наличие пластиковой карты
+        d.plasticCardAvailability = deposit.plasticCardAvailability;
+
+        return d;
     }
 };
 

@@ -9,7 +9,7 @@
 #include <QTableWidget>
 #include "depositDatabase.h"
 #include "randomrecord.h"
-#include <QFileDialog>>
+#include <QFileDialog>
 #include <QMessageBox>
 
 namespace Ui {
@@ -50,9 +50,9 @@ private slots:
 
     void openFile();
     void saveFile();
-    void on_openFileButton_clicked();
-    void on_saveFileButon_clicked();
-    void on_saveAsFileButton_clicked();
+//    void on_openFileButton_clicked();
+//    void on_saveFileButon_clicked();
+//    void on_saveAsFileButton_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -96,6 +96,129 @@ bool DepositDatabase::save() {
     if (myFile == INVALID_HANDLE_VALUE)
         return false;
 
+    // Проверка базы дпнных на заполненность
+    if (database.empty())
+        return false;
+
+    QVector<Deposit>::iterator i;
+    DWORD bytesWritten;
+    Deposit::D d;
+    BOOL isOk;
+
+    for (i = database.end()-1; i != database.begin(); --i) {
+        d = Deposit::depositToStruct(*i);
+
+        // id
+        isOk = WriteFile(myFile, &d.id, sizeof(d.id), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.id)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Номер счета
+        isOk = WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.accountNumber)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Тип вклада
+        isOk = WriteFile(myFile, &d.type, sizeof(d.type), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.type)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // ФИО
+        isOk = WriteFile(myFile, &d.FIO, sizeof(d.FIO), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.FIO)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Дата рождения
+        isOk = WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.birthDate)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Сумма вклада
+        isOk = WriteFile(myFile, &d.amount, sizeof(d.amount), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.amount)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Процент вклада
+        isOk = WriteFile(myFile, &d.interest, sizeof(d.interest), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.interest)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Переодичность начисления
+        isOk = WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.accrualFrequency)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Последняя транзакция
+        isOk = WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.lastTransaction)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+
+        // Наличие пластиковой карты
+        isOk = WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesWritten, NULL);
+        if (isOk == FALSE) {
+            printf_s("Error!");
+            return false;
+        }
+        if(bytesWritten!=sizeof(d.plasticCardAvailability)) {
+            printf_s("Can’t read data");
+            return false;
+        }
+    }
+
     return true;
 
     /*
@@ -139,6 +262,37 @@ bool DepositDatabase::load() {
     // Проверка на успешность открытия файла
     if (myFile == INVALID_HANDLE_VALUE)
         return false;
+
+    // Чтение данных
+    const DWORD bufferSize = 1024;
+    char buffer[bufferSize];
+    DWORD bytesRead;
+
+    // Запись данных в буфер
+    if(!ReadFile(
+        myFile,
+        buffer,
+        bufferSize,
+        &bytesRead,
+        NULL
+        ))
+    {
+        return false;
+    }
+
+    QByteArray byteArray(buffer, bytesRead);
+    QDataStream output(&byteArray, QIODevice::ReadOnly);
+
+    // Очищаем локальную базу перед загрузкой
+    database.clear();
+
+    // Зополняем базу данных
+    Deposit d;
+
+    while (!output.atEnd()) {
+        output >> d;
+        database.append(d);
+    }
 
     CloseHandle(myFile);
 
