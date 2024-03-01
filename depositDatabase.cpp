@@ -176,35 +176,35 @@ bool DepositDatabase::load() {
     if (myFile == INVALID_HANDLE_VALUE)
         return false;
 
-    // Чтение данных
-    const DWORD bufferSize = 1024;
-    char buffer[bufferSize];
-    DWORD bytesRead;
-
-    // Запись данных в буфер
-    if(!ReadFile(
-        myFile,
-        buffer,
-        bufferSize,
-        &bytesRead,
-        NULL
-        ))
-    {
-        return false;
-    }
-
-    QByteArray byteArray(buffer, bytesRead);
-    QDataStream output(&byteArray, QIODevice::ReadOnly);
-
     // Очищаем локальную базу перед загрузкой
     database.clear();
 
-    // Зополняем базу данных
-    Deposit d;
+    QVector<Deposit>::iterator i;
+    Deposit::D d;
 
-    while (!output.atEnd()) {
-        output >> d;
-        database.append(d);
+    for (i = database.end()-1; i != database.begin(); --i) {
+        d = Deposit::depositToStruct(*i);
+
+        // id
+        WriteFile(myFile, &d.id, sizeof(d.id), NULL, NULL);
+        // Номер счета
+        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), NULL, NULL);
+        // Тип вклада
+        WriteFile(myFile, &d.type, sizeof(d.type), NULL, NULL);
+        // ФИО
+        WriteFile(myFile, &d.FIO, sizeof(d.FIO), NULL, NULL);
+        // Дата рождения
+        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), NULL, NULL);
+        // Сумма вклада
+        WriteFile(myFile, &d.amount, sizeof(d.amount), NULL, NULL);
+        // Процент вклада
+        WriteFile(myFile, &d.interest, sizeof(d.interest), NULL, NULL);
+        // Переодичность начисления
+        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), NULL, NULL);
+        // Последняя транзакция
+        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), NULL, NULL);
+        // Наличие пластиковой карты
+        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), NULL, NULL);
     }
 
     CloseHandle(myFile);
