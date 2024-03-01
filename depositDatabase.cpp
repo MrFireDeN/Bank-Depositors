@@ -97,127 +97,40 @@ bool DepositDatabase::save() {
         return false;
 
     // Проверка базы дпнных на заполненность
-    if (database.empty())
+    if (database.empty()){
+        CloseHandle(myFile);
         return false;
+    }
 
     QVector<Deposit>::iterator i;
-    DWORD bytesWritten;
     Deposit::D d;
-    BOOL isOk;
 
     for (i = database.end()-1; i != database.begin(); --i) {
         d = Deposit::depositToStruct(*i);
 
         // id
-        isOk = WriteFile(myFile, &d.id, sizeof(d.id), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.id)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.id, sizeof(d.id), NULL, NULL);
         // Номер счета
-        isOk = WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.accountNumber)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), NULL, NULL);
         // Тип вклада
-        isOk = WriteFile(myFile, &d.type, sizeof(d.type), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.type)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.type, sizeof(d.type), NULL, NULL);
         // ФИО
-        isOk = WriteFile(myFile, &d.FIO, sizeof(d.FIO), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.FIO)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.FIO, sizeof(d.FIO), NULL, NULL);
         // Дата рождения
-        isOk = WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.birthDate)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), NULL, NULL);
         // Сумма вклада
-        isOk = WriteFile(myFile, &d.amount, sizeof(d.amount), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.amount)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.amount, sizeof(d.amount), NULL, NULL);
         // Процент вклада
-        isOk = WriteFile(myFile, &d.interest, sizeof(d.interest), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.interest)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.interest, sizeof(d.interest), NULL, NULL);
         // Переодичность начисления
-        isOk = WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.accrualFrequency)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), NULL, NULL);
         // Последняя транзакция
-        isOk = WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.lastTransaction)) {
-            printf_s("Can’t read data");
-            return false;
-        }
-
+        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), NULL, NULL);
         // Наличие пластиковой карты
-        isOk = WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesWritten, NULL);
-        if (isOk == FALSE) {
-            printf_s("Error!");
-            return false;
-        }
-        if(bytesWritten!=sizeof(d.plasticCardAvailability)) {
-            printf_s("Can’t read data");
-            return false;
-        }
+        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), NULL, NULL);
     }
+
+    CloseHandle(myFile);
 
     return true;
 
