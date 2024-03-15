@@ -169,8 +169,10 @@ void MainWindow::on_recordBrowserButton_clicked()
     }
 
     // выделить последний элемент браузера
-    on_recordBrowserTable_cellClicked(dd.count()-1, 0);
-    ui->recordBrowserTable->selectRow(dd.count()-1);
+    if (dd.count() > 0) {
+        on_recordBrowserTable_cellClicked(dd.count()-1, 0);
+        ui->recordBrowserTable->selectRow(dd.count()-1);
+    }
     showDeposit(deposit);
 }
 
@@ -267,11 +269,10 @@ void MainWindow::openFile(){
             addRow(deposit);
         }
 
-        if(dd.count() > 0)
+        if(dd.count() > 0){
             setUIEnabled(true);
-
-        //recordType = dd.count() -1;
-        on_recordBrowserTable_cellClicked(recordType, 0);
+            on_recordBrowserTable_cellClicked(recordType, 0);
+        }
     }
     else {
         QMessageBox::information(nullptr, "Ошибка", "Файла не существует");

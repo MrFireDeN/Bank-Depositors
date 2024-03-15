@@ -33,6 +33,7 @@ public:
 
 private:
     const LPCTSTR FILENAME = TEXT("main.dd");
+    QVector<Deposit> database;
     int add(const Deposit& record);
 
     unsigned int id;
