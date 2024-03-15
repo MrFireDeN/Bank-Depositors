@@ -193,15 +193,12 @@ bool DepositDatabase::load() {
         // Наличие пластиковой карты
         ReadFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
 
-        if (!d.isValid()){
-                CloseHandle(myFile);
-                return false;
-            }
-
         database.append(Deposit::fromStruct(d));
     }
 
     CloseHandle(myFile);
+
+    return true;
 }
 
 // Кол-во элементов

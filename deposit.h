@@ -34,26 +34,6 @@ public:
         int accrualFrequency;           // Переодичность начисления
         char lastTransaction[10];       // Последняя транзакция
         bool plasticCardAvailability;   // Наличие пластиковой карты
-
-        bool isValid() {
-            if (id == NULL)
-                return false;
-            if (accountNumber[0] == NULL)
-                return false;
-            if (FIO[0] == NULL)
-                return false;
-            if (birthDate[0] == NULL)
-                return false;
-            if (amount == NULL)
-                return false;
-            if (interest == NULL)
-                return false;
-            if (accountNumber[0] == NULL)
-                return false;
-            if (lastTransaction[0] == NULL)
-                return false;
-            return true;
-        };
     };
 
     bool operator>(const Deposit& d) const {
@@ -119,6 +99,7 @@ public:
         // ФИО
         stringData = deposit.FIO.toUtf8();
         std::copy(stringData.constBegin(), stringData.constBegin()+qMin(45, stringData.size()), d.FIO);
+        d.FIO[qMin(45, stringData.size())] = '\0';
 
         // Тип вклада
         d.type = deposit.type;
