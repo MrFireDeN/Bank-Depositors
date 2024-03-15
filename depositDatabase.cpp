@@ -84,10 +84,10 @@ bool DepositDatabase::save() {
     // Создание файла
     HANDLE myFile = CreateFile(
         FILENAME,               // Имя файла
-        GENERIC_READ,           // Желаемый доступ к файлу (здесь только чтение)
-        FILE_SHARE_READ,        // Режим разделения (можно открывать другим процессам для чтения)
+        GENERIC_WRITE,          // Желаемый доступ к файлу (здесь только запись)
+        0,                      // Режим разделения (нельзя открывать другим процессам)
         NULL,                   // Атрибуты безопасности (не используется)
-        OPEN_EXISTING,          // Режим открытия (открываем существующий файл)
+        CREATE_ALWAYS,          // Режим открытия (открываем существующий файл)
         FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
         NULL                    // Дескриптор файла-шаблона (не используется)
         );
@@ -104,59 +104,40 @@ bool DepositDatabase::save() {
 
     QVector<Deposit>::iterator i;
     Deposit::D d;
+    DWORD bytesRead;
+    int counts = database.count();
 
-    for (i = database.end()-1; i != database.begin(); --i) {
+    WriteFile(myFile, &counts, sizeof(counts), &bytesRead, NULL);
+
+
+    for (i = database.end()-1; i != database.begin()-1; --i) {
         d = Deposit::toStruct(*i);
 
         // id
-        WriteFile(myFile, &d.id, sizeof(d.id), NULL, NULL);
+        WriteFile(myFile, &d.id, sizeof(d.id), &bytesRead, NULL);
         // Номер счета
-        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), NULL, NULL);
+        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
         // Тип вклада
-        WriteFile(myFile, &d.type, sizeof(d.type), NULL, NULL);
+        WriteFile(myFile, &d.type, sizeof(d.type), &bytesRead, NULL);
         // ФИО
-        WriteFile(myFile, &d.FIO, sizeof(d.FIO), NULL, NULL);
+        WriteFile(myFile, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
         // Дата рождения
-        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), NULL, NULL);
+        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
         // Сумма вклада
-        WriteFile(myFile, &d.amount, sizeof(d.amount), NULL, NULL);
+        WriteFile(myFile, &d.amount, sizeof(d.amount), &bytesRead, NULL);
         // Процент вклада
-        WriteFile(myFile, &d.interest, sizeof(d.interest), NULL, NULL);
+        WriteFile(myFile, &d.interest, sizeof(d.interest), &bytesRead, NULL);
         // Переодичность начисления
-        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), NULL, NULL);
+        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
         // Последняя транзакция
-        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), NULL, NULL);
+        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
         // Наличие пластиковой карты
-        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), NULL, NULL);
+        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
     }
 
     CloseHandle(myFile);
 
     return true;
-
-    /*
-    // провека названия
-    if (filename.isEmpty() || database.empty())
-        return false;
-
-    QFile MyFile(filename);
-
-    if (MyFile.open(QIODevice::WriteOnly)) {
-        QDataStream output(&MyFile);
-        QVector<Deposit>::iterator i;
-
-        for (i = database.end()-1; i != database.begin(); --i) {
-            output << *i;
-        }
-        output << *database.constBegin();
-
-        MyFile.close();
-
-        return true;
-    }
-
-    return false;
-    */
 }
 
 // Загрузить файл базы данных
@@ -164,10 +145,10 @@ bool DepositDatabase::load() {
     // Создание файла
     HANDLE myFile = CreateFile(
         FILENAME,               // Имя файла
-        GENERIC_WRITE,          // Желаемый доступ к файлу (здесь только запись)
+        GENERIC_READ,           // Желаемый доступ к файлу (здесь только чтение)
         0,                      // Режим разделения (нельзя открывать другим процессам)
         NULL,                   // Атрибуты безопасности (не используется)
-        CREATE_ALWAYS,          // Режим создания (создаем новый файл или перезаписываем существующий)
+        OPEN_ALWAYS,            // Режим создания (создаем новый файл или перезаписываем существующий)
         FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
         NULL                    // Дескриптор файла-шаблона (не используется)
         );
@@ -179,62 +160,48 @@ bool DepositDatabase::load() {
     // Очищаем локальную базу перед загрузкой
     database.clear();
 
-    QVector<Deposit>::iterator i;
+    //QVector<Deposit>::iterator i;
     Deposit::D d;
+    DWORD bytesRead;
+    int counts;
 
-    for (i = database.end()-1; i != database.begin(); --i) {
-        d = Deposit::toStruct(*i);
+    if (!ReadFile(myFile, (void*)&counts, sizeof(counts), &bytesRead, NULL)) {
+        CloseHandle(myFile);
+        return false;
+    }
 
+    for (int i = 0; i < counts; ++i)
+    {
         // id
-        WriteFile(myFile, &d.id, sizeof(d.id), NULL, NULL);
+        ReadFile(myFile, (void*)&d.id, sizeof(d.id), &bytesRead, NULL);
         // Номер счета
-        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), NULL, NULL);
+        ReadFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
         // Тип вклада
-        WriteFile(myFile, &d.type, sizeof(d.type), NULL, NULL);
+        ReadFile(myFile, &d.type, sizeof(d.type), &bytesRead, NULL);
         // ФИО
-        WriteFile(myFile, &d.FIO, sizeof(d.FIO), NULL, NULL);
+        ReadFile(myFile, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
         // Дата рождения
-        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), NULL, NULL);
+        ReadFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
         // Сумма вклада
-        WriteFile(myFile, &d.amount, sizeof(d.amount), NULL, NULL);
+        ReadFile(myFile, &d.amount, sizeof(d.amount), &bytesRead, NULL);
         // Процент вклада
-        WriteFile(myFile, &d.interest, sizeof(d.interest), NULL, NULL);
+        ReadFile(myFile, &d.interest, sizeof(d.interest), &bytesRead, NULL);
         // Переодичность начисления
-        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), NULL, NULL);
+        ReadFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
         // Последняя транзакция
-        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), NULL, NULL);
+        ReadFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
         // Наличие пластиковой карты
-        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), NULL, NULL);
+        ReadFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+
+        if (!d.isValid()){
+                CloseHandle(myFile);
+                return false;
+            }
+
+        database.append(Deposit::fromStruct(d));
     }
 
     CloseHandle(myFile);
-
-    return true;
-
-    /*
-    // провека названия
-    if (filename.isEmpty())
-        return false;
-
-    QFile MyFile(filename);
-    if (MyFile.open(QIODevice::ReadOnly)) {
-        database.clear();
-
-        QDataStream output(&MyFile);
-        Deposit d;
-
-        while (!output.atEnd()) {
-            output >> d;
-            database.append(d);
-        }
-
-        MyFile.close();
-
-        return true;
-    }
-
-    return false;
-    */
 }
 
 // Кол-во элементов

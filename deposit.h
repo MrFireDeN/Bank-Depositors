@@ -25,15 +25,35 @@ public:
 
     struct D {
         unsigned int id;                // id
-        char accountNumber[21];         // Номер счета
+        char accountNumber[20];         // Номер счета
         int type;                       // Тип вклада
-        char FIO[46];                   // ФИО
-        char birthDate[11];             // Дата рождения
+        char FIO[45];                   // ФИО
+        char birthDate[10];             // Дата рождения
         double amount;                  // Сумма вклада
         double interest;                // Процент вклада
         int accrualFrequency;           // Переодичность начисления
-        char lastTransaction[11];       // Последняя транзакция
+        char lastTransaction[10];       // Последняя транзакция
         bool plasticCardAvailability;   // Наличие пластиковой карты
+
+        bool isValid() {
+            if (id == NULL)
+                return false;
+            if (accountNumber[0] == NULL)
+                return false;
+            if (FIO[0] == NULL)
+                return false;
+            if (birthDate[0] == NULL)
+                return false;
+            if (amount == NULL)
+                return false;
+            if (interest == NULL)
+                return false;
+            if (accountNumber[0] == NULL)
+                return false;
+            if (lastTransaction[0] == NULL)
+                return false;
+            return true;
+        };
     };
 
     bool operator>(const Deposit& d) const {
@@ -86,24 +106,26 @@ public:
 
     static D toStruct(Deposit &deposit) {
         D d;
+        QByteArray stringData;
 
         // id
         d.id = deposit.id;
 
         // Номер счета
-        std::strcpy(d.accountNumber, deposit.accountNumber.toStdString().c_str());
-        d.accountNumber[sizeof(d.accountNumber)-1] = '\0';
+        stringData = deposit.accountNumber.toUtf8();
+        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(20, stringData.size()), d.accountNumber);
+
 
         // ФИО
-        std::strcpy(d.FIO, deposit.FIO.toStdString().c_str());
-        d.FIO[sizeof(d.FIO)-1] = '\0';
+        stringData = deposit.FIO.toUtf8();
+        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(45, stringData.size()), d.FIO);
 
         // Тип вклада
         d.type = deposit.type;
 
         // Дата рождения
-        std::strcpy(d.birthDate, deposit.birthDate.toString().toStdString().c_str());
-        d.birthDate[sizeof(d.birthDate)-1] = '\0';
+        stringData = deposit.birthDate.toString("dd.MM.yyyy").toUtf8();
+        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(10, stringData.size()), d.birthDate);
 
         // Сумма вклада
         d.amount = deposit.amount;
@@ -115,8 +137,8 @@ public:
         d.accrualFrequency = deposit.accrualFrequency;
 
         // Последняя транзакция
-        std::strcpy(d.lastTransaction, deposit.lastTransaction.toString().toStdString().c_str());
-        d.lastTransaction[sizeof(d.lastTransaction)-1] = '\0';
+        stringData = deposit.lastTransaction.toString("dd.MM.yyyy").toUtf8();
+        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(10, stringData.size()), d.lastTransaction);
 
         // Наличие пластиковой карты
         d.plasticCardAvailability = deposit.plasticCardAvailability;
@@ -140,7 +162,7 @@ public:
         deposit.type = d.type;
 
         // Дата рождения
-        deposit.birthDate = QDate::fromString(QString::fromStdString(d.birthDate));
+        deposit.birthDate = QDate::fromString(QString::fromStdString(d.birthDate), "dd.MM.yyyy");
 
         // Сумма вклада
         deposit.amount = d.amount;
@@ -152,7 +174,7 @@ public:
         deposit.accrualFrequency = d.accrualFrequency;
 
         // Последняя транзакция
-        deposit.lastTransaction = QDate::fromString(QString::fromStdString(d.lastTransaction));
+        deposit.lastTransaction = QDate::fromString(QString::fromStdString(d.lastTransaction), "dd.MM.yyyy");
 
         // Наличие пластиковой карты
         deposit.plasticCardAvailability = d.plasticCardAvailability;
