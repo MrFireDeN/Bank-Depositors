@@ -84,7 +84,7 @@ public:
         return in;
     }
 
-    static D depositToStruct(Deposit &deposit) {
+    static D toStruct(Deposit &deposit) {
         D d;
 
         // id
@@ -122,6 +122,42 @@ public:
         d.plasticCardAvailability = deposit.plasticCardAvailability;
 
         return d;
+    }
+
+    static Deposit fromStruct(D &d) {
+        Deposit deposit;
+
+        // id
+        deposit.id = d.id;
+
+        // Номер счета
+        deposit.accountNumber = QString::fromStdString(d.accountNumber);
+
+        // ФИО
+        deposit.FIO = QString::fromStdString(d.FIO);
+
+        // Тип вклада
+        deposit.type = d.type;
+
+        // Дата рождения
+        deposit.birthDate = QDate::fromString(QString::fromStdString(d.birthDate));
+
+        // Сумма вклада
+        deposit.amount = d.amount;
+
+        // Процент вклада
+        deposit.interest = d.interest;
+
+        // Переодичность начисления
+        deposit.accrualFrequency = d.accrualFrequency;
+
+        // Последняя транзакция
+        deposit.lastTransaction = QDate::fromString(QString::fromStdString(d.lastTransaction));
+
+        // Наличие пластиковой карты
+        deposit.plasticCardAvailability = d.plasticCardAvailability;
+
+        return deposit;
     }
 };
 

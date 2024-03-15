@@ -106,7 +106,7 @@ bool DepositDatabase::save() {
     Deposit::D d;
 
     for (i = database.end()-1; i != database.begin(); --i) {
-        d = Deposit::depositToStruct(*i);
+        d = Deposit::toStruct(*i);
 
         // id
         WriteFile(myFile, &d.id, sizeof(d.id), NULL, NULL);
@@ -183,7 +183,7 @@ bool DepositDatabase::load() {
     Deposit::D d;
 
     for (i = database.end()-1; i != database.begin(); --i) {
-        d = Deposit::depositToStruct(*i);
+        d = Deposit::toStruct(*i);
 
         // id
         WriteFile(myFile, &d.id, sizeof(d.id), NULL, NULL);
