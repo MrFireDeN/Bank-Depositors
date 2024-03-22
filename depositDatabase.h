@@ -30,18 +30,26 @@ public:
     bool load();
     bool connect();
     bool disconnect();
-    void clear();
     bool isModified() const;
 
 private:
     const LPCTSTR SERVERNAME = TEXT("bankserver.exe");
     const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 
+    const DWORD
+        FINISH_REQ  = 0,
+        APPEND_REQ  = 1,
+        REMOVE_REQ  = 2,
+        SEND_REQ    = 3,
+        LOAD_REQ    = 4,
+        RECORD_REQ  = 5,
+        RECORDS_REQ = 6,
+        COUNT_REQ   = 7;
+
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     HANDLE hPipe;
     DWORD mode;
-    int add(const Deposit& record);
 
     unsigned int id;
 };

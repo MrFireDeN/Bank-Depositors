@@ -5,82 +5,6 @@ DepositDatabase::DepositDatabase()
 
 }
 
-// Добавить элемент
-int DepositDatabase::add(const Deposit& record) {
-//    QVector<Deposit>::const_iterator i = database.constBegin();
-
-//    while (i != database.constEnd() && *i > record)
-//        ++i;
-
-//    if (i == database.constEnd()) {
-//        database.append(record);
-//        return database.count()-1;
-//    }
-
-//    int row = (i - database.constBegin());
-
-//    database.insert(i, record);
-
-//    return row;
-
-    return 0;
-}
-
-// Добавить элемент в базу данных
-int DepositDatabase::append(Deposit& record) {
-    record.id = ++id;
-
-    return add(record);
-}
-
-// Удаленить элемент из базы данных
-void DepositDatabase::remove(unsigned int id) {
-//    QVector <Deposit>::const_iterator i;
-
-//    for (i = database.constBegin(); i != database.constEnd(); ++i) {
-//        if (i->id == id) {
-//            database.erase(i);
-//            return;
-//        }
-//    }
-}
-
-// Обновить запись в базе данных
-int DepositDatabase::update(const Deposit& record) {
-    remove(record.id);
-
-    return add(record);
-}
-
-// Возвратить вектор записей
-const QVector<DepositDatabase::RecordRow> DepositDatabase::records() const {
-    QVector<RecordRow> rr;
-
-//    QVector<Deposit>::const_iterator i;
-
-//    for (i = database.constBegin(); i != database.constEnd(); ++i)
-//        rr.append({
-//            i->id,
-//            i->accountNumber,
-//            i->amount
-//        });
-
-    return rr;
-}
-
-// Открыть запись для чтения
-void DepositDatabase::record(unsigned int id, Deposit &record) const {
-//    QVector<Deposit>::const_iterator i = database.constBegin();
-
-//    while (i != database.constEnd() && i->id != id)
-//        ++i;
-
-//    if (i == database.constEnd())
-//        return;
-
-//    record = *i;
-}
-
 // Подключение к серверу
 bool DepositDatabase::connect() {
     ZeroMemory( &si, sizeof(si) );
@@ -128,6 +52,59 @@ bool DepositDatabase::disconnect() {
     ZeroMemory(&pi, sizeof(pi));
 
     return 1;
+}
+
+// Добавить элемент в базу данных
+int DepositDatabase::append(Deposit& record) {
+    /*
+    1. Отправляет запрос на добалвение элеманта на сервер
+    2. сервер возвращает id добавленного элемента
+    */
+
+    int id = 0;
+    return id;
+}
+
+// Удаленить элемент из базы данных
+void DepositDatabase::remove(unsigned int id) {
+    /*
+    1. Отправляет запрос на удаление элеманта по id на сервер
+    */
+}
+
+// Обновить запись в базе данных
+int DepositDatabase::update(const Deposit& record) {
+    // Создаем копию объекта record
+    Deposit recordCopy = record;
+
+    // Удаляем старую запись из базы данных
+    remove(recordCopy.id);
+
+    // Добавляем обновленную запись в базу данных
+    return append(recordCopy);
+}
+
+// Возвратить вектор записей
+const QVector<DepositDatabase::RecordRow> DepositDatabase::records() const {
+    QVector<RecordRow> rr;
+
+    /*
+    1. Отправляет запрос на сервер на получение списка записей
+    2. сервер возвращает вектор записей
+    */
+
+    return rr;
+}
+
+// Открыть запись для чтения
+void DepositDatabase::record(unsigned int id, Deposit &record) const {
+    /*
+    1. Отправляет запрос на сервер на получение записи по id
+    2. сервер возвращает запись
+    */
+    Deposit::D d;
+
+    record = Deposit::fromStruct(d);
 }
 
 // Сохранить файл на сервер
@@ -182,12 +159,10 @@ bool DepositDatabase::load() {
 
 // Кол-во элементов
 int DepositDatabase::count() {
-    //return database.count();
+    /*
+    1. Отправляет запрос на сервер на получение кол-ва списка записей
+    2. сервер возвращает кол-во записей
+    */
 
     return 0;
-}
-
-// Уничтожение всех данных
-void DepositDatabase::clear() {
-    //database.clear();
 }

@@ -33,21 +33,90 @@ bool DepositDatabase::start() {
         return 0;
     }
 
-    const DWORD FINISH_REQ = 0, LOAD_REQ = 1, SEND_REQ = 2;
+    const DWORD
+        FINISH_REQ  = 0,
+        APPEND_REQ  = 1,
+        REMOVE_REQ  = 2,
+        SEND_REQ    = 3,
+        LOAD_REQ    = 4,
+        RECORD_REQ  = 5,
+        RECORDS_REQ = 6,
+        COUNT_REQ   = 7;
 
     Deposit rec;
     do {
-        //Loading request number
+        //Загрузка номера запроса
         ReadFile(hPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
         switch (req) {
-            case LOAD_REQ:
-                load();
+            case APPEND_REQ:
+                append();
+                break;
+            case REMOVE_REQ:
+                remove();
                 break;
             case SEND_REQ:
                 send();
                 break;
+            case LOAD_REQ:
+                load();
+                break;
+            case RECORD_REQ:
+                record();
+                break;
+            case RECORDS_REQ:
+                records();
+                break;
+            case COUNT_REQ:
+                count();
+                break;
         }
     } while (req != FINISH_REQ);
+
+    return 1;
+}
+
+
+// Загрузить файл c клиента
+bool DepositDatabase::append() {
+    Deposit::D record;
+    int counts;
+
+    if (!ReadFile(hPipe, (LPVOID)&counts, sizeof(counts), &bytesRead, NULL)) {
+        return false;
+    }
+
+    clear();
+
+    for (int i = 0; i < counts; ++i)
+    {
+        // id
+        ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
+        // Номер счета
+        ReadFile(hPipe, (LPVOID)&record.accountNumber, sizeof(record.accountNumber), &bytesRead, NULL);
+        // Тип вклада
+        ReadFile(hPipe, (LPVOID)&record.type, sizeof(record.type), &bytesRead, NULL);
+        // ФИО
+        ReadFile(hPipe, (LPVOID)&record.FIO, sizeof(record.FIO), &bytesRead, NULL);
+        // Дата рождения
+        ReadFile(hPipe, (LPVOID)&record.birthDate, sizeof(record.birthDate), &bytesRead, NULL);
+        // Сумма вклада
+        ReadFile(hPipe, (LPVOID)&record.amount, sizeof(record.amount), &bytesRead, NULL);
+        // Процент вклада
+        ReadFile(hPipe, (LPVOID)&record.interest, sizeof(record.interest), &bytesRead, NULL);
+        // Переодичность начисления
+        ReadFile(hPipe, (LPVOID)&record.accrualFrequency, sizeof(record.accrualFrequency), &bytesRead, NULL);
+        // Последняя транзакция
+        ReadFile(hPipe, (LPVOID)&record.lastTransaction, sizeof(record.lastTransaction), &bytesRead, NULL);
+        // Наличие пластиковой карты
+        ReadFile(hPipe, (LPVOID)&record.plasticCardAvailability, sizeof(record.plasticCardAvailability), &bytesRead, NULL);
+
+        Deposit deposit = Deposit::fromStruct(record);
+        deposit.id = ++id;
+        int pos = add(deposit);
+
+        WriteFile(hPipe, (LPCVOID)&deposit.id, sizeof(unsigned int), &bytesWritten, NULL);
+        WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
+    }
 
     return 1;
 }
@@ -104,48 +173,6 @@ bool DepositDatabase::send() {
     return 1;
 }
 
-// Загрузить файл c клиента
-bool DepositDatabase::load() {
-    Deposit::D record;
-    int counts;
-
-    if (!ReadFile(hPipe, (LPVOID)&counts, sizeof(counts), &bytesRead, NULL)) {
-        return false;
-    }
-
-    for (int i = 0; i < counts; ++i)
-    {
-        // id
-        ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
-        // Номер счета
-        ReadFile(hPipe, (LPVOID)&record.accountNumber, sizeof(record.accountNumber), &bytesRead, NULL);
-        // Тип вклада
-        ReadFile(hPipe, (LPVOID)&record.type, sizeof(record.type), &bytesRead, NULL);
-        // ФИО
-        ReadFile(hPipe, (LPVOID)&record.FIO, sizeof(record.FIO), &bytesRead, NULL);
-        // Дата рождения
-        ReadFile(hPipe, (LPVOID)&record.birthDate, sizeof(record.birthDate), &bytesRead, NULL);
-        // Сумма вклада
-        ReadFile(hPipe, (LPVOID)&record.amount, sizeof(record.amount), &bytesRead, NULL);
-        // Процент вклада
-        ReadFile(hPipe, (LPVOID)&record.interest, sizeof(record.interest), &bytesRead, NULL);
-        // Переодичность начисления
-        ReadFile(hPipe, (LPVOID)&record.accrualFrequency, sizeof(record.accrualFrequency), &bytesRead, NULL);
-        // Последняя транзакция
-        ReadFile(hPipe, (LPVOID)&record.lastTransaction, sizeof(record.lastTransaction), &bytesRead, NULL);
-        // Наличие пластиковой карты
-        ReadFile(hPipe, (LPVOID)&record.plasticCardAvailability, sizeof(record.plasticCardAvailability), &bytesRead, NULL);
-
-        Deposit deposit = Deposit::fromStruct(record);
-        int pos = append(deposit);
-
-        WriteFile(hPipe, (LPCVOID)&deposit.id, sizeof(unsigned int), &bytesWritten, NULL);
-        WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
-    }
-
-    return 1;
-}
-
 // Добавить элемент
 int DepositDatabase::add(const Deposit& record) {
 
@@ -166,64 +193,77 @@ int DepositDatabase::add(const Deposit& record) {
     return row;
 }
 
-// Добавить элемент в базу данных
-int DepositDatabase::append(Deposit& record) {
-    record.id = ++id;
-
-    return add(record);
-}
-
 // Удаленить элемент из базы данных
-void DepositDatabase::remove(unsigned int id) {
-    QVector <Deposit>::const_iterator i;
+bool DepositDatabase::remove() {
+    /*
+    1. Удаляет запись из списка
+    2. Возвращает новую завись
+    */
 
-    for (i = database.constBegin(); i != database.constEnd(); ++i) {
-        if (i->id == id) {
-                database.erase(i);
-                return;
-        }
-    }
-}
+//    QVector <Deposit>::const_iterator i;
 
-// Обновить запись в базе данных
-int DepositDatabase::update(const Deposit& record) {
-    remove(record.id);
+//    for (i = database.constBegin(); i != database.constEnd(); ++i) {
+//        if (i->id == id) {
+//                database.erase(i);
+//                return;
+//        }
+//    }
 
-    return add(record);
-}
-
-// Возвратить вектор записей
-const QVector<DepositDatabase::RecordRow> DepositDatabase::records() const {
-    QVector<RecordRow> rr;
-
-    QVector<Deposit>::const_iterator i;
-
-    for (i = database.constBegin(); i != database.constEnd(); ++i)
-        rr.append({
-            i->id,
-            i->accountNumber,
-            i->amount
-        });
-
-    return rr;
+    return 1;
 }
 
 // Открыть запись для чтения
-void DepositDatabase::record(unsigned int id, Deposit &record) const {
-    QVector<Deposit>::const_iterator i = database.constBegin();
+bool DepositDatabase::record() const {
+    /*
+    1. Сервер получет id
+    2. Cервер возвращает запись
+    */
 
-    while (i != database.constEnd() && i->id != id)
-        ++i;
+    //    QVector<Deposit>::const_iterator i = database.constBegin();
 
-    if (i == database.constEnd())
-        return;
+    //    while (i != database.constEnd() && i->id != id)
+    //        ++i;
 
-    record = *i;
+    //    if (i == database.constEnd())
+    //        return;
+
+    //    record = *i;
+
+    return 1;
+}
+
+// Возвратить вектор записей
+bool DepositDatabase::records() const {
+    /*
+    1. сервер возвращает вектор записей
+    */
+
+//    QVector<RecordRow> rr;
+
+//    QVector<Deposit>::const_iterator i;
+
+//    for (i = database.constBegin(); i != database.constEnd(); ++i)
+//        rr.append({
+//            i->id,
+//            i->accountNumber,
+//            i->amount
+//        });
+
+//    return rr;
+
+    return 1;
 }
 
 // Кол-во элементов
-int DepositDatabase::count() {
-    return database.count();
+bool DepositDatabase::count() {
+    /*
+    2. Cервер возвращает кол-во записей
+    */
+
+
+//    return database.count();
+
+    return 1;
 }
 
 // Уничтожение всех данных

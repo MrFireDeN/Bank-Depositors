@@ -21,14 +21,13 @@ public:
     };
 
     bool start();
-    int count();
-    int append(Deposit &record);
-    void remove(unsigned int id);
-    int update(const Deposit& record);
-    void record(unsigned int id, Deposit& record) const;
-    const QVector<RecordRow> records() const;
+    bool append();
+    bool remove();
     bool send();
     bool load();
+    bool record() const;
+    bool records() const;
+    bool count();
     void clear();
     bool isModified() const;
 
