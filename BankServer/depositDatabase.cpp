@@ -56,15 +56,13 @@ bool DepositDatabase::start() {
 bool DepositDatabase::send() {
     QVector<Deposit>::iterator i;
     Deposit::D record;
+    int counts = database.count();
 
     //Проверка базы дпнных на заполненность
     if (database.empty())
     {
         return false;
     }
-
-
-    int counts = database.count();
 
     if (!WriteFile(hPipe, &counts, sizeof(counts), &bytesWritten, NULL))
     {
@@ -104,64 +102,9 @@ bool DepositDatabase::send() {
     }
 
     return 1;
-
-//    // Создание файла
-//    HANDLE myFile = CreateFile(
-//        FILENAME,               // Имя файла
-//        GENERIC_WRITE,          // Желаемый доступ к файлу (здесь только запись)
-//        0,                      // Режим разделения (нельзя открывать другим процессам)
-//        NULL,                   // Атрибуты безопасности (не используется)
-//        CREATE_ALWAYS,          // Режим открытия (открываем существующий файл)
-//        FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
-//        NULL                    // Дескриптор файла-шаблона (не используется)
-//        );
-
-//    // Проверка на успешность открытия файла
-//    if (myFile == INVALID_HANDLE_VALUE)
-//        return false;
-
-//    // Проверка базы дпнных на заполненность
-//    if (database.empty()){
-//        CloseHandle(myFile);
-//        return false;
-//    }
-
-//    QVector<Deposit>::iterator i;
-//    Deposit::D d;
-//    int counts = database.count();
-
-//    WriteFile(myFile, &counts, sizeof(counts), &bytesRead, NULL);
-
-
-//    for (i = database.end()-1; i != database.begin()-1; --i) {
-//        d = Deposit::toStruct(*i);
-
-//        // id
-//        WriteFile(myFile, &d.id, sizeof(d.id), &bytesRead, NULL);
-//        // Номер счета
-//        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
-//        // Тип вклада
-//        WriteFile(myFile, &d.type, sizeof(d.type), &bytesRead, NULL);
-//        // ФИО
-//        WriteFile(myFile, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
-//        // Дата рождения
-//        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
-//        // Сумма вклада
-//        WriteFile(myFile, &d.amount, sizeof(d.amount), &bytesRead, NULL);
-//        // Процент вклада
-//        WriteFile(myFile, &d.interest, sizeof(d.interest), &bytesRead, NULL);
-//        // Переодичность начисления
-//        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
-//        // Последняя транзакция
-//        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
-//        // Наличие пластиковой карты
-//        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
-//    }
-
-//    CloseHandle(myFile);
 }
 
-// Загрузить файл на клиент
+// Загрузить файл c клиента
 bool DepositDatabase::load() {
     Deposit::D record;
     int counts;
