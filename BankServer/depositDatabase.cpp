@@ -212,6 +212,10 @@ bool DepositDatabase::remove() {
     return 1;
 }
 
+bool DepositDatabase::load() {
+    return 1;
+}
+
 // Открыть запись для чтения
 bool DepositDatabase::record() const {
     /*

@@ -4,6 +4,7 @@
 #include <QVector>
 #include <QFile>
 #include "deposit.h"
+#include <QThread>>
 #include <QDate>
 #include <QDataStream>
 #include <Windows.h>
@@ -33,7 +34,7 @@ public:
     bool isModified() const;
 
 private:
-    const LPCTSTR SERVERNAME = TEXT("bankserver.exe");
+    const LPCTSTR SERVERNAME = TEXT("server\\bankserver.exe");
     const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 
     const DWORD

@@ -19,6 +19,8 @@ bool DepositDatabase::connect() {
 
     qDebug() << "Сервер успешно запущен.\n";
 
+    QThread::msleep(2000);
+
     hPipe = CreateFile(
         SERVERPIPE,                     // Имя канала
         GENERIC_READ | GENERIC_WRITE,   // Доступ к чтению и записи
