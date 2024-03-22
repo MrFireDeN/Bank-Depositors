@@ -56,12 +56,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
     srand(time(0));
 
+    // Подключение к базе данных
+    dd.connect();
+
+    // Открытие из базы данных
     openFile();
 }
 
 MainWindow::~MainWindow()
 {
+    // Сохрание в базу данных
     saveFile();
+
+    // Отключенние от базы данных
+    dd.disconnect();
 
     delete ui;
 }

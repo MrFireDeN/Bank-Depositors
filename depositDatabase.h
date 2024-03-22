@@ -28,11 +28,19 @@ public:
     const QVector<RecordRow> records() const;
     bool save();
     bool load();
+    bool connect();
+    bool disconnect();
     void clear();
     bool isModified() const;
 
 private:
-    const LPCTSTR FILENAME = TEXT("main.dd");
+    const LPCTSTR SERVERNAME = TEXT("bankserver.exe");
+    const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    HANDLE hPipe;
+    DWORD mode;
     int add(const Deposit& record);
 
     unsigned int id;

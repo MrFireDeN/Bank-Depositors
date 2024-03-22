@@ -81,23 +81,103 @@ void DepositDatabase::record(unsigned int id, Deposit &record) const {
 //    record = *i;
 }
 
-// Сохранить файл базы данных
-bool DepositDatabase::save() {
-    return true;
+// Подключение к серверу
+bool DepositDatabase::connect() {
+    ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+
+    // Создание нового процесса
+    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        qDebug() << "Ошибка при запуске сервера: " << GetLastError();
+        return 0;
+    }
+
+    qDebug() << "Сервер успешно запущен.\n";
+
+    hPipe = CreateFile(
+        SERVERPIPE,                     // Имя канала
+        GENERIC_READ | GENERIC_WRITE,   // Доступ к чтению и записи
+        0,                              // Не разделять ресурс между потоками
+        NULL,                           // Дескриптор безопасности по умолчанию
+        OPEN_EXISTING,                  // Открыть существующий канал
+        0,                              // Флаги и атрибуты по умолчанию
+        NULL                            // Необходимость дополнительных атрибутов
+        );
+
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        qDebug() << "Ошибка при подключении к каналу: " << GetLastError();
+        return 0;
+    }
+
+    qDebug() << "Подключение к каналу прошло успешно.";
+
+    return 1;
 }
 
-// Загрузить файл базы данных
+// Отключение от серевера
+bool DepositDatabase::disconnect() {
+    // Закрытие дескриптора канала
+    CloseHandle(hPipe);
+
+    // Закрытие дескрипторов процесса и потока
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    // Обнуление дескрипторов процесса и потока
+    ZeroMemory(&pi, sizeof(pi));
+
+    return 1;
+}
+
+// Сохранить файл на сервер
+bool DepositDatabase::save() {
+    // Изменение режима канала на запись
+    mode = PIPE_TYPE_MESSAGE | PIPE_WAIT;
+    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
+        qDebug() << "Ошибка при установке режима канала на запись: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+    qDebug() << "Режим канала на запись установлен.";
+
+    // Пример чтения из канала
+    char buffer[1024];
+    DWORD bytesWrite;
+    if (!WriteFile(hPipe, buffer, sizeof(buffer), &bytesWrite, NULL)) {
+        qDebug() << "Ошибка при чтении из канала: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+
+    qDebug() << "Прочитано из канала: " << buffer;
+
+    return 1;
+}
+
+// Загрузить файл с сервера
 bool DepositDatabase::load() {
+    // Изменение режима канала на чтение
+    mode = PIPE_READMODE_BYTE | PIPE_WAIT;
+    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
+        qDebug() << "Ошибка при установке режима канала на чтение: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+    qDebug() << "Режим канала на чтение установлен.";
 
-//    HANDLE hPipe = CreateNamedPipe(
-//        "\\\\.\\pipe\\myfirstpipe",
-//        PIPE_ACCESS_DUPLEX,
-//        PIPE_TYPE_MESSAGE |
-//        PIPE_READMODE_BYTE | PIPE_WAIT,
-//        PIPE_UNLIMITED_INSTANCES, 1024,
-//        1024, 5000, NULL);
+    // Пример чтения из канала
+    char buffer[1024];
+    DWORD bytesRead;
+    if (!ReadFile(hPipe, buffer, sizeof(buffer), &bytesRead, NULL)) {
+        qDebug() << "Ошибка при записи в канал: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
 
-    return true;
+    qDebug() << "Записано в канал: " << buffer;
+
+    return 1;
 }
 
 // Кол-во элементов
