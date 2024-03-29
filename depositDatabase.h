@@ -4,10 +4,12 @@
 #include <QVector>
 #include <QFile>
 #include "deposit.h"
-#include <QThread>>
+#include <QThread>
 #include <QDate>
 #include <QDataStream>
 #include <Windows.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 class DepositDatabase
 {
@@ -25,8 +27,8 @@ public:
     int append(Deposit &record);
     void remove(unsigned int id);
     int update(const Deposit& record);
-    void record(unsigned int id, Deposit& record) const;
-    const QVector<RecordRow> records() const;
+    void record(unsigned int id, Deposit& record);
+    const QVector<RecordRow> records();
     bool save();
     bool load();
     bool connect();
@@ -50,9 +52,17 @@ private:
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     HANDLE hPipe;
-    DWORD mode;
+    DWORD mode, bytesWritten, bytesRead;
+    char buffer[1024];
+    int bufferSize = 1024;
+    int req, pos;
 
     unsigned int id;
+
+    void intToBuffer(int, char[1024]);
+    void stringToBuffer(QString, char[1024]);
+    void depositToBuffer(Deposit, char[1024]);
+    void vectToBuffer(RecordRow, char[1024]);
 };
 
 #endif // RECORD_H

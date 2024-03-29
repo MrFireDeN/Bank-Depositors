@@ -84,7 +84,7 @@ public:
         return in;
     }
 
-    static D toStruct(Deposit &deposit) {
+    static D toStruct(Deposit &deposit){
         D d;
         QByteArray stringData;
 

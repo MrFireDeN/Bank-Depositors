@@ -7,6 +7,8 @@
 #include <QDate>
 #include <QDataStream>
 #include <Windows.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 class DepositDatabase
 {
@@ -25,8 +27,8 @@ public:
     bool remove();
     bool send();
     bool load();
-    bool record() const;
-    bool records() const;
+    bool record();
+    bool records();
     bool count();
     void clear();
     bool isModified() const;
@@ -41,9 +43,16 @@ private:
 
     HANDLE hPipe;
     DWORD mode, bytesWritten, bytesRead;
+    char buffer[1024];
+    int bufferSize = 1024;
     int req, pos;
 
     unsigned int id;
+
+    void intToBuffer(int, char[1024]);
+    void stringToBuffer(QString, char[1024]);
+    void depositToBuffer(Deposit, char[1024]);
+    void vectToBuffer(RecordRow, char[1024]);
 };
 
 #endif // RECORD_H

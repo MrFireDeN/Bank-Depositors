@@ -1,4 +1,7 @@
 #include "depositDatabase.h"
+#include <iostream>
+
+using namespace std;
 
 DepositDatabase::DepositDatabase()
 {
@@ -20,18 +23,28 @@ bool DepositDatabase::start() {
         );
 
     if (hPipe == INVALID_HANDLE_VALUE) {
-        qDebug() << "Ошибка при создании канала:" << GetLastError();
+        qDebug() << "Error creating channel: " << GetLastError();
+        //cout << "Error creating channel: " << GetLastError();
         return 0;
     }
 
-    qDebug() << "Именованный канал успешно создан.\n";
+    qDebug() << "Named pipe created successfully.\n";
+    //cout << "Named pipe created successfully.\n";
 
     // Ожидание соединения
     if (!ConnectNamedPipe(hPipe, NULL)) {
-        qDebug() << "Ошибка при ожидании соединения: " << GetLastError();
+        qDebug() << "Error while waiting for connection: " << GetLastError();
+        cout << "Error while waiting for connection: " << GetLastError();
         CloseHandle(hPipe);
         return 0;
     }
+
+    if (!load()) {
+        qDebug() << "Error while loading database: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+    qDebug() << "Database successfully load.\n";
 
     const DWORD
         FINISH_REQ  = 0,
@@ -47,6 +60,7 @@ bool DepositDatabase::start() {
     do {
         //Загрузка номера запроса
         ReadFile(hPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
+
         switch (req) {
             case APPEND_REQ:
                 append();
@@ -212,65 +226,161 @@ bool DepositDatabase::remove() {
     return 1;
 }
 
+// Загрузить файл базы данных
 bool DepositDatabase::load() {
-    return 1;
+    // Создание файла
+    HANDLE myFile = CreateFile(
+        FILENAME,               // Имя файла
+        GENERIC_READ,           // Желаемый доступ к файлу (здесь только чтение)
+        0,                      // Режим разделения (нельзя открывать другим процессам)
+        NULL,                   // Атрибуты безопасности (не используется)
+        OPEN_ALWAYS,            // Режим создания (создаем новый файл или перезаписываем существующий)
+        FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
+        NULL                    // Дескриптор файла-шаблона (не используется)
+        );
+
+    // Проверка на успешность открытия файла
+    if (myFile == INVALID_HANDLE_VALUE)
+        return false;
+
+    // Очищаем локальную базу перед загрузкой
+    database.clear();
+
+    //QVector<Deposit>::iterator i;
+    Deposit::D d;
+    DWORD bytesRead;
+    int counts;
+
+    if (!ReadFile(myFile, (void*)&counts, sizeof(counts), &bytesRead, NULL)) {
+        CloseHandle(myFile);
+        return false;
+    }
+
+    for (int i = 0; i < counts; ++i)
+    {
+        // id
+        ReadFile(myFile, (void*)&d.id, sizeof(d.id), &bytesRead, NULL);
+        // Номер счета
+        ReadFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+        // Тип вклада
+        ReadFile(myFile, &d.type, sizeof(d.type), &bytesRead, NULL);
+        // ФИО
+        ReadFile(myFile, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+        // Дата рождения
+        ReadFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+        // Сумма вклада
+        ReadFile(myFile, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+        // Процент вклада
+        ReadFile(myFile, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+        // Переодичность начисления
+        ReadFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+        // Последняя транзакция
+        ReadFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+        // Наличие пластиковой карты
+        ReadFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+
+        database.append(Deposit::fromStruct(d));
+    }
+
+    CloseHandle(myFile);
+
+    return true;
 }
 
 // Открыть запись для чтения
-bool DepositDatabase::record() const {
+bool DepositDatabase::record(){
     /*
     1. Сервер получет id
     2. Cервер возвращает запись
     */
 
-    //    QVector<Deposit>::const_iterator i = database.constBegin();
+    ReadFile(hPipe, (LPVOID)&id, sizeof(int), &bytesRead, NULL);
 
-    //    while (i != database.constEnd() && i->id != id)
-    //        ++i;
+    QVector<Deposit>::iterator i = database.begin();
 
-    //    if (i == database.constEnd())
-    //        return;
+    while (i != database.end() && i->id != id)
+        ++i;
 
-    //    record = *i;
+    if (i == database.end())
+        return 0;
+
+    Deposit::D d = Deposit::toStruct(*i);
+
+    // id
+    WriteFile(hPipe, &d.id, sizeof(d.id), &bytesRead, NULL);
+    // Номер счета
+    WriteFile(hPipe, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+    // Тип вклада
+    WriteFile(hPipe, &d.type, sizeof(d.type), &bytesRead, NULL);
+    // ФИ
+    WriteFile(hPipe, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+    // Дата рождения
+    WriteFile(hPipe, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+    // Сумма вклада
+    WriteFile(hPipe, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+    // Процент вклада
+    WriteFile(hPipe, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+    // Переодичность начисления
+    WriteFile(hPipe, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+    // Последняя транзакция
+    WriteFile(hPipe, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+    // Наличие пластиковой карты
+    WriteFile(hPipe, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
 
     return 1;
 }
 
 // Возвратить вектор записей
-bool DepositDatabase::records() const {
-    /*
-    1. сервер возвращает вектор записей
-    */
+bool DepositDatabase::records(){
+    QVector<Deposit>::iterator i;
+    Deposit::D d;
 
-//    QVector<RecordRow> rr;
+    int count = database.count();
+    if (!WriteFile(hPipe, (LPVOID)&count, sizeof(count), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
+        return 0;
+    }
 
-//    QVector<Deposit>::const_iterator i;
+    for (i = database.begin(); i != database.end(); ++i){
+        d = Deposit::toStruct(*i);
 
-//    for (i = database.constBegin(); i != database.constEnd(); ++i)
-//        rr.append({
-//            i->id,
-//            i->accountNumber,
-//            i->amount
-//        });
-
-//    return rr;
+        WriteFile(hPipe, (LPVOID)&d.id, sizeof(d.id), &bytesWritten, NULL);
+        WriteFile(hPipe, (LPVOID)&d.accountNumber, sizeof(d.accountNumber), &bytesWritten, NULL);
+        WriteFile(hPipe, (LPVOID)&d.amount, sizeof(d.amount), &bytesWritten, NULL);
+    }
+    qDebug() << "Writting to chanel successfuly" ;
 
     return 1;
 }
 
 // Кол-во элементов
 bool DepositDatabase::count() {
-    /*
-    2. Cервер возвращает кол-во записей
-    */
+    int count = database.count();
 
+//    intToBuffer(count, buffer);
+//    if (!WriteFile(hPipe, (LPVOID)&buffer, sizeof(buffer), &bytesWritten, NULL)) {
+//        qDebug() << "Error writing to channel: " << GetLastError();
+//        return 0;
+//    }
 
-//    return database.count();
+    if (!WriteFile(hPipe, (LPVOID)&count, sizeof(int), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
+        return 0;
+    }
 
+    qDebug() << "Writting to chanel successfuly" ;
     return 1;
 }
 
 // Уничтожение всех данных
 void DepositDatabase::clear() {
     database.clear();
+}
+
+void DepositDatabase::intToBuffer(int num, char buffer[1024]) {
+    for (int i =0; i < bufferSize; ++i) {
+        buffer[i] = '\0';
+    }
+
+    snprintf(buffer, sizeof(bufferSize), "%d", num);
 }
