@@ -27,6 +27,7 @@ public:
     bool remove();
     bool send();
     bool load();
+    bool save();
     bool record();
     bool records();
     bool count();
@@ -49,10 +50,8 @@ private:
 
     unsigned int id;
 
-    void intToBuffer(int, char[1024]);
-    void stringToBuffer(QString, char[1024]);
-    void depositToBuffer(Deposit, char[1024]);
-    void vectToBuffer(RecordRow, char[1024]);
+    RecordRow toRecord(Deposit::D);
+    Deposit::D fromRecord(RecordRow);
 };
 
 #endif // RECORD_H

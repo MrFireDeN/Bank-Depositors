@@ -43,11 +43,10 @@ private:
         FINISH_REQ  = 0,
         APPEND_REQ  = 1,
         REMOVE_REQ  = 2,
-        SEND_REQ    = 3,
-        LOAD_REQ    = 4,
-        RECORD_REQ  = 5,
-        RECORDS_REQ = 6,
-        COUNT_REQ   = 7;
+        SAVE_REQ    = 3,
+        RECORD_REQ  = 4,
+        RECORDS_REQ = 5,
+        COUNT_REQ   = 6;
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -59,10 +58,8 @@ private:
 
     unsigned int id;
 
-    void intToBuffer(int, char[1024]);
-    void stringToBuffer(QString, char[1024]);
-    void depositToBuffer(Deposit, char[1024]);
-    void vectToBuffer(RecordRow, char[1024]);
+    RecordRow toRecord(Deposit::D);
+    Deposit::D fromRecord(RecordRow);
 };
 
 #endif // RECORD_H

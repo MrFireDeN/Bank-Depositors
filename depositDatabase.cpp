@@ -10,16 +10,16 @@ bool DepositDatabase::connect() {
     ZeroMemory( &si, sizeof(si) );
     si.cb = sizeof(si);
 
-    // Создание нового процесса
-    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-    {
-        qDebug() << "Start server error: " << GetLastError();
-        return 0;
-    }
+//    // Создание нового процесса
+//    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+//    {
+//        qDebug() << "Start server error: " << GetLastError();
+//        return 0;
+//    }
 
     qDebug() << "Start server successful.\n";
 
-    QThread::msleep(2000);
+    QThread::msleep(1000);
 
     hPipe = CreateFile(
         SERVERPIPE,                     // Имя канала
@@ -43,6 +43,14 @@ bool DepositDatabase::connect() {
 
 // Отключение от серевера
 bool DepositDatabase::disconnect() {
+    req = FINISH_REQ;
+    DWORD bytesWritten;
+    if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+
     // Закрытие дескриптора канала
     CloseHandle(hPipe);
 
@@ -58,13 +66,41 @@ bool DepositDatabase::disconnect() {
 
 // Добавить элемент в базу данных
 int DepositDatabase::append(Deposit& record) {
-    /*
-    1. Отправляет запрос на добалвение элеманта на сервер
-    2. сервер возвращает id добавленного элемента
-    */
+    req = APPEND_REQ;
+    if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
+        CloseHandle(hPipe);
+        return -1;
+    }
 
-    int id = 0;
-    return id;
+    Deposit::D d = Deposit::toStruct(record);
+
+    // Номер счета
+    WriteFile(hPipe, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+    // Тип вклада
+    WriteFile(hPipe, &d.type, sizeof(d.type), &bytesRead, NULL);
+    // ФИО
+    WriteFile(hPipe, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+    // Дата рождения
+    WriteFile(hPipe, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+    // Сумма вклада
+    WriteFile(hPipe, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+    // Процент вклада
+    WriteFile(hPipe, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+    // Переодичность начисления
+    WriteFile(hPipe, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+    // Последняя транзакция
+    WriteFile(hPipe, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+    // Наличие пластиковой карты
+    WriteFile(hPipe, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+
+    record = Deposit::fromStruct(d);
+
+    ReadFile(hPipe, (void*)&id, sizeof(id), &bytesRead, NULL);
+    record.id = id;
+    ReadFile(hPipe, (void*)&pos, sizeof(pos), &bytesRead, NULL);
+
+    return pos;
 }
 
 // Удаленить элемент из базы данных
@@ -72,6 +108,15 @@ void DepositDatabase::remove(unsigned int id) {
     /*
     1. Отправляет запрос на удаление элеманта по id на сервер
     */
+
+    req = REMOVE_REQ;
+    if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
+        CloseHandle(hPipe);
+        return;
+    }
+
+    WriteFile(hPipe, (LPCVOID)&id, sizeof(int), &bytesWritten, NULL);
 }
 
 // Обновить запись в базе данных
@@ -88,21 +133,7 @@ int DepositDatabase::update(const Deposit& record) {
 
 // Возвратить вектор записей
 const QVector<DepositDatabase::RecordRow> DepositDatabase::records() {
-    /*
-    1. Отправляет запрос на сервер на получение списка записей
-    2. сервер возвращает вектор записей
-    */
-
     QVector<RecordRow> rr;
-
-    // Изменение режима канала на запись
-//    mode = PIPE_TYPE_MESSAGE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to writting: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return rr;
-//    }
-//    qDebug() << "The channel mode is set to writting.";
 
     req = RECORDS_REQ;
     DWORD bytesWritten;
@@ -111,15 +142,6 @@ const QVector<DepositDatabase::RecordRow> DepositDatabase::records() {
         CloseHandle(hPipe);
         return rr;
     }
-
-    // Изменение режима канала на чтение
-//    mode = PIPE_READMODE_BYTE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to read: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return rr;
-//    }
-//    qDebug() << "Channel mode is set to read.";
 
     // Пример чтения из канала
     int count;
@@ -139,13 +161,7 @@ const QVector<DepositDatabase::RecordRow> DepositDatabase::records() {
         ReadFile(hPipe, (LPVOID)&d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
         ReadFile(hPipe, (LPVOID)&d.amount, sizeof(d.amount), &bytesRead, NULL);
 
-        deposit = Deposit::fromStruct(d);
-
-        rr.append({
-            deposit.id,
-            deposit.accountNumber,
-            deposit.amount
-        });
+        rr.append(DepositDatabase::toRecord(d));
     }
 
     return rr;
@@ -153,20 +169,6 @@ const QVector<DepositDatabase::RecordRow> DepositDatabase::records() {
 
 // Открыть запись для чтения
 void DepositDatabase::record(unsigned int id, Deposit &record) {
-    /*
-    1. Отправляет запрос на сервер на получение записи по id
-    2. сервер возвращает запись
-    */
-
-    // Изменение режима канала на запись
-//    mode = PIPE_TYPE_MESSAGE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to writting: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return;
-//    }
-//    qDebug() << "The channel mode is set to writting.";
-
     req = RECORD_REQ;
     DWORD bytesWritten;
     if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
@@ -175,20 +177,10 @@ void DepositDatabase::record(unsigned int id, Deposit &record) {
         return;
     }
 
-    WriteFile(hPipe, (LPCVOID)&id, sizeof(int), &bytesWritten, NULL);
-
-    // Изменение режима канала на чтение
-//    mode = PIPE_READMODE_BYTE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to read: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return;
-//    }
-//    qDebug() << "Channel mode is set to read.";
+    WriteFile(hPipe, (LPCVOID)&id, sizeof(id), &bytesWritten, NULL);
 
     // Пример чтения из канала
     Deposit::D d;
-    DWORD bytesRead;
 
     // id
     ReadFile(hPipe, (void*)&d.id, sizeof(d.id), &bytesRead, NULL);
@@ -216,25 +208,13 @@ void DepositDatabase::record(unsigned int id, Deposit &record) {
 
 // Сохранить файл на сервер
 bool DepositDatabase::save() {
-    // Изменение режима канала на запись
-//    mode = PIPE_TYPE_MESSAGE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to writting: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return 0;
-//    }
-//    qDebug() << "The channel mode is set to writting.";
-
-    // Пример чтения из канала
-    char buffer[1024];
-    DWORD bytesWrite;
-    if (!WriteFile(hPipe, buffer, sizeof(buffer), &bytesWrite, NULL)) {
-        qDebug() << "Error reading from channel: " << GetLastError();
+    req = SAVE_REQ;
+    DWORD bytesWritten;
+    if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
         CloseHandle(hPipe);
         return 0;
     }
-
-    qDebug() << "Read from the channel: " << buffer;
 
     return 1;
 }
@@ -246,15 +226,6 @@ bool DepositDatabase::load() {
 
 // Кол-во элементов
 int DepositDatabase::count() {
-    // Изменение режима канала на запись
-//    mode = PIPE_TYPE_MESSAGE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to writting: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return 0;
-//    }
-//    qDebug() << "The channel mode is set to writting.";
-
     req = COUNT_REQ;
     DWORD bytesWritten;
     if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
@@ -263,15 +234,6 @@ int DepositDatabase::count() {
         return 0;
     }
     qDebug() << "Written in channel: " << buffer;
-
-    // Изменение режима канала на чтение
-//    mode = PIPE_READMODE_BYTE | PIPE_WAIT;
-//    if (!SetNamedPipeHandleState(hPipe, &mode, NULL, NULL)) {
-//        qDebug() << "Error when setting channel mode to read: " << GetLastError();
-//        CloseHandle(hPipe);
-//        return 0;
-//    }
-//    qDebug() << "Channel mode is set to read.";
 
     // Пример чтения из канала
     int number;
@@ -285,4 +247,26 @@ int DepositDatabase::count() {
     qDebug() << "Read from the channel: " << number;
 
     return number;
+}
+R
+DepositDatabase::RecordRow DepositDatabase::toRecord(Deposit::D d) {
+    DepositDatabase::RecordRow rr;
+
+    rr.id = d.id;
+    rr.amount = d.amount;
+    rr.accountNumber = QString::fromStdString(d.accountNumber);
+
+    return rr;
+}
+
+Deposit::D DepositDatabase::fromRecord(DepositDatabase::RecordRow rr) {
+    Deposit::D d;
+
+    d.id = rr.id;
+    d.amount = rr.amount;
+
+    QByteArray stringData = rr.accountNumber.toUtf8();
+    std::copy(stringData.constBegin(), stringData.constBegin()+qMin(20, stringData.size()), d.accountNumber);
+
+    return d;
 }
