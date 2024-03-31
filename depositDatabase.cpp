@@ -124,11 +124,41 @@ int DepositDatabase::update(const Deposit& record) {
     // Создаем копию объекта record
     Deposit recordCopy = record;
 
-    // Удаляем старую запись из базы данных
-    remove(recordCopy.id);
+    req = UPDATE_REQ;
+    DWORD bytesWritten;
+    if (!WriteFile(hPipe, (LPCVOID)&req, sizeof(int), &bytesWritten, NULL)) {
+        qDebug() << "Error writing to channel: " << GetLastError();
+        CloseHandle(hPipe);
+        return -1;
+    }
 
-    // Добавляем обновленную запись в базу данных
-    return append(recordCopy);
+    WriteFile(hPipe, (LPCVOID)&id, sizeof(int), &bytesWritten, NULL);
+
+    Deposit::D d = Deposit::toStruct(recordCopy);
+
+    // Номер счета
+    WriteFile(hPipe, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+    // Тип вклада
+    WriteFile(hPipe, &d.type, sizeof(d.type), &bytesRead, NULL);
+    // ФИО
+    WriteFile(hPipe, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+    // Дата рождения
+    WriteFile(hPipe, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+    // Сумма вклада
+    WriteFile(hPipe, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+    // Процент вклада
+    WriteFile(hPipe, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+    // Переодичность начисления
+    WriteFile(hPipe, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+    // Последняя транзакция
+    WriteFile(hPipe, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+    // Наличие пластиковой карты
+    WriteFile(hPipe, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+
+
+    ReadFile(hPipe, (void*)&pos, sizeof(pos), &bytesRead, NULL);
+
+    return pos;
 }
 
 // Возвратить вектор записей
@@ -248,7 +278,7 @@ int DepositDatabase::count() {
 
     return number;
 }
-R
+
 DepositDatabase::RecordRow DepositDatabase::toRecord(Deposit::D d) {
     DepositDatabase::RecordRow rr;
 

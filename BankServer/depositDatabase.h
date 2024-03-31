@@ -25,7 +25,7 @@ public:
     bool start();
     bool append();
     bool remove();
-    bool send();
+    bool update();
     bool load();
     bool save();
     bool record();
@@ -48,7 +48,7 @@ private:
     int bufferSize = 1024;
     int req, pos;
 
-    unsigned int id;
+    unsigned int id = 0;
 
     RecordRow toRecord(Deposit::D);
     Deposit::D fromRecord(RecordRow);

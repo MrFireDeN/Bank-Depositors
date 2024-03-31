@@ -46,7 +46,8 @@ private:
         SAVE_REQ    = 3,
         RECORD_REQ  = 4,
         RECORDS_REQ = 5,
-        COUNT_REQ   = 6;
+        COUNT_REQ   = 6,
+        UPDATE_REQ  = 7;
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;

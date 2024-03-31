@@ -28,11 +28,11 @@ public:
         char accountNumber[20];         // Номер счета
         int type;                       // Тип вклада
         char FIO[45];                   // ФИО
-        char birthDate[10];             // Дата рождения
+        char birthDate[11];             // Дата рождения
         double amount;                  // Сумма вклада
         double interest;                // Процент вклада
         int accrualFrequency;           // Переодичность начисления
-        char lastTransaction[10];       // Последняя транзакция
+        char lastTransaction[11];       // Последняя транзакция
         bool plasticCardAvailability;   // Наличие пластиковой карты
     };
 
@@ -107,6 +107,8 @@ public:
         // Дата рождения
         stringData = deposit.birthDate.toString("dd.MM.yyyy").toUtf8();
         std::copy(stringData.constBegin(), stringData.constBegin()+qMin(10, stringData.size()), d.birthDate);
+        d.birthDate[qMin(11, stringData.size())] = '\0';
+
 
         // Сумма вклада
         d.amount = deposit.amount;
@@ -120,6 +122,7 @@ public:
         // Последняя транзакция
         stringData = deposit.lastTransaction.toString("dd.MM.yyyy").toUtf8();
         std::copy(stringData.constBegin(), stringData.constBegin()+qMin(10, stringData.size()), d.lastTransaction);
+        d.lastTransaction[qMin(11, stringData.size())] = '\0';
 
         // Наличие пластиковой карты
         d.plasticCardAvailability = deposit.plasticCardAvailability;

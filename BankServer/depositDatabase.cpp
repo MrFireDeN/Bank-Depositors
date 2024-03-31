@@ -53,7 +53,8 @@ bool DepositDatabase::start() {
         SAVE_REQ    = 3,
         RECORD_REQ  = 4,
         RECORDS_REQ = 5,
-        COUNT_REQ   = 6;
+        COUNT_REQ   = 6,
+        UPDATE_REQ  = 7;
 
     Deposit rec;
     do {
@@ -78,6 +79,9 @@ bool DepositDatabase::start() {
                 break;
             case COUNT_REQ:
                 count();
+                break;
+            case UPDATE_REQ:
+                update();
                 break;
         }
     } while (req != FINISH_REQ);
@@ -115,7 +119,7 @@ bool DepositDatabase::append() {
 
     Deposit deposit = Deposit::fromStruct(record);
     deposit.id = ++id;
-    int pos = add(deposit);
+    pos = add(deposit);
 
     WriteFile(hPipe, (LPCVOID)&deposit.id, sizeof(unsigned int), &bytesWritten, NULL);
     WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
@@ -149,16 +153,54 @@ bool DepositDatabase::remove() {
     1. Удаляет запись из списка
     */
 
-    ReadFile(hPipe, (LPVOID)&id, sizeof(int), &bytesRead, NULL);
+
+    unsigned int tempID;
+    ReadFile(hPipe, (LPVOID)&tempID, sizeof(tempID), &bytesRead, NULL);
 
     QVector <Deposit>::const_iterator i;
 
     for (i = database.constBegin(); i != database.constEnd(); ++i) {
-        if (i->id == id) {
+        if (i->id == tempID) {
                 database.erase(i);
                 return 1;
         }
     }
+
+    return 1;
+}
+
+bool DepositDatabase::update() {
+    if (!remove()){
+        return 0;
+    }
+
+    Deposit::D record;
+
+    // id
+    //ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
+    // Номер счета
+    ReadFile(hPipe, (LPVOID)&record.accountNumber, sizeof(record.accountNumber), &bytesRead, NULL);
+    // Тип вклада
+    ReadFile(hPipe, (LPVOID)&record.type, sizeof(record.type), &bytesRead, NULL);
+    // ФИО
+    ReadFile(hPipe, (LPVOID)&record.FIO, sizeof(record.FIO), &bytesRead, NULL);
+    // Дата рождения
+    ReadFile(hPipe, (LPVOID)&record.birthDate, sizeof(record.birthDate), &bytesRead, NULL);
+    // Сумма вклада
+    ReadFile(hPipe, (LPVOID)&record.amount, sizeof(record.amount), &bytesRead, NULL);
+    // Процент вклада
+    ReadFile(hPipe, (LPVOID)&record.interest, sizeof(record.interest), &bytesRead, NULL);
+    // Переодичность начисления
+    ReadFile(hPipe, (LPVOID)&record.accrualFrequency, sizeof(record.accrualFrequency), &bytesRead, NULL);
+    // Последняя транзакция
+    ReadFile(hPipe, (LPVOID)&record.lastTransaction, sizeof(record.lastTransaction), &bytesRead, NULL);
+    // Наличие пластиковой карты
+    ReadFile(hPipe, (LPVOID)&record.plasticCardAvailability, sizeof(record.plasticCardAvailability), &bytesRead, NULL);
+
+    Deposit deposit = Deposit::fromStruct(record);
+    pos = add(deposit);
+
+    WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
 
     return 1;
 }
@@ -171,7 +213,7 @@ bool DepositDatabase::load() {
         GENERIC_READ,           // Желаемый доступ к файлу (здесь только чтение)
         0,                      // Режим разделения (нельзя открывать другим процессам)
         NULL,                   // Атрибуты безопасности (не используется)
-        OPEN_ALWAYS,            // Режим создания (создаем новый файл или перезаписываем существующий)
+        OPEN_EXISTING,            // Режим создания (создаем новый файл или перезаписываем существующий)
         FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
         NULL                    // Дескриптор файла-шаблона (не используется)
         );
@@ -191,6 +233,10 @@ bool DepositDatabase::load() {
     if (!ReadFile(myFile, (void*)&counts, sizeof(counts), &bytesRead, NULL)) {
         CloseHandle(myFile);
         return false;
+    }
+
+    if (!bytesRead) {
+        return 1;
     }
 
     for (int i = 0; i < counts; ++i)
@@ -216,7 +262,8 @@ bool DepositDatabase::load() {
         // Наличие пластиковой карты
         ReadFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
 
-        database.append(Deposit::fromStruct(d));
+        add(Deposit::fromStruct(d));
+        id = d.id;
     }
 
     CloseHandle(myFile);
@@ -292,11 +339,12 @@ bool DepositDatabase::record(){
     2. Cервер возвращает запись
     */
 
-    ReadFile(hPipe, (LPVOID)&id, sizeof(id), &bytesRead, NULL);
+    unsigned int tempID;
+    ReadFile(hPipe, (LPVOID)&tempID, sizeof(tempID), &bytesRead, NULL);
 
     QVector<Deposit>::iterator i = database.begin();
 
-    while (i != database.end() && i->id != id)
+    while (i != database.end() && i->id != tempID)
         ++i;
 
 //    if (i == database.end())
