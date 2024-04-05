@@ -10,12 +10,12 @@ bool DepositDatabase::connect() {
     ZeroMemory( &si, sizeof(si) );
     si.cb = sizeof(si);
 
-//    // Создание нового процесса
-//    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-//    {
-//        qDebug() << "Start server error: " << GetLastError();
-//        return 0;
-//    }
+    // Создание нового процесса
+    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        qDebug() << "Start server error: " << GetLastError();
+        return 0;
+    }
 
     qDebug() << "Start server successful.\n";
 
@@ -132,7 +132,7 @@ int DepositDatabase::update(const Deposit& record) {
         return -1;
     }
 
-    WriteFile(hPipe, (LPCVOID)&id, sizeof(int), &bytesWritten, NULL);
+    WriteFile(hPipe, (LPCVOID)&record.id, sizeof(int), &bytesWritten, NULL);
 
     Deposit::D d = Deposit::toStruct(recordCopy);
 

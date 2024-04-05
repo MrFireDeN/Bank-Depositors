@@ -25,7 +25,7 @@ public:
 
     struct D {
         unsigned int id;                // id
-        char accountNumber[20];         // Номер счета
+        char accountNumber[21];         // Номер счета
         int type;                       // Тип вклада
         char FIO[45];                   // ФИО
         char birthDate[11];             // Дата рождения
@@ -94,7 +94,7 @@ public:
         // Номер счета
         stringData = deposit.accountNumber.toUtf8();
         std::copy(stringData.constBegin(), stringData.constBegin()+qMin(20, stringData.size()), d.accountNumber);
-
+        d.accountNumber[qMin(21, stringData.size())] = '\0';
 
         // ФИО
         stringData = deposit.FIO.toUtf8();

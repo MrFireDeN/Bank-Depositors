@@ -9,5 +9,7 @@ int main(int argc, char *argv[])
     DepositDatabase dd;
     dd.start();
 
+    QCoreApplication::quit();
+
     return a.exec();
 }

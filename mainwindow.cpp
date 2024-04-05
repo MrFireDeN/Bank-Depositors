@@ -124,10 +124,27 @@ void MainWindow::on_recordCreate_clicked()
 // Сохранить запись
 void MainWindow::on_recordSave_clicked()
 {
-    saveDeposit(deposit); // сохраняет значение из виджетов в запись
-    ui->recordBrowserTable->removeRow(recordType); // удаляет прошлую запись из браузера
+    saveDeposit(deposit); // сохраняет значение из виджетов в запись из браузера
     recordType = dd.update(deposit); // обновляет запись в базе данных
-    addRow(deposit); // добавляет новую запись в браузер
+
+
+    ui->recordBrowserTable->clear();
+    ui->recordBrowserTable->setRowCount(0);
+
+    QVector<DepositDatabase::RecordRow> rr = dd.records();
+
+    for (int i = 0; i < rr.count(); i++) {
+        deposit.id = rr[i].id;
+        deposit.accountNumber = rr[i].accountNumber;
+        deposit.amount = rr[i].amount;
+        recordType = i;
+        addRow(deposit);
+    }
+
+    if(dd.count() > 0){
+        setUIEnabled(true);
+        on_recordBrowserTable_cellClicked(recordType, 0);
+    }
 }
 
 // Удалить запись
