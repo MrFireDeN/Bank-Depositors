@@ -1,4 +1,5 @@
 QT = core
+QT += core5compat
 
 CONFIG += c++17 cmdline
 
