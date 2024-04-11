@@ -10,41 +10,87 @@ DepositDatabase::DepositDatabase()
 
 // Запустить сервер
 bool DepositDatabase::start() {
-    // Создание именованного канала
-    hPipe = CreateNamedPipe(
-        SERVERPIPE,                                         // Имя канала
-        PIPE_ACCESS_DUPLEX,                                 // Дуплексный доступ
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT, // Режимы чтения и ожидания
-        PIPE_UNLIMITED_INSTANCES,                           // Количество экземпляров
-        1024,                                               // Размер выходного буфера
-        1024,                                               // Размер входного буфера
-        5000,                                               // Время ожидания по умолчанию (5 секунд)
-        NULL                                                // Защита по умолчанию
+    // Считать данные из файла
+    if (!load()) {
+        qDebug() << "Ошибка при загрузке базы данных: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+    qDebug() << "База данных успешно загружена.\n";
+
+    // Создание именованного канала для приема подключений
+    HANDLE hServerPipe = CreateNamedPipe(
+        SERVERPIPE,
+        PIPE_ACCESS_DUPLEX,
+        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
+        PIPE_UNLIMITED_INSTANCES,
+        1024,
+        1024,
+        5000,
+        NULL
         );
 
-    if (hPipe == INVALID_HANDLE_VALUE) {
-        qDebug() << "Error creating channel: " << GetLastError();
-        //cout << "Error creating channel: " << GetLastError();
+    if (hServerPipe == INVALID_HANDLE_VALUE) {
+        qDebug() << "Ошибка создания канала: " << GetLastError();
         return 0;
     }
+    qDebug() << "Именованный канал успешно создан.\n";
 
-    qDebug() << "Named pipe created successfully.\n";
-    //cout << "Named pipe created successfully.\n";
+    // Цикл подключения клиентов
+    while (true) {
+        // Ожидание соединения
+        if (!ConnectNamedPipe(hServerPipe, NULL)) {
+            qDebug() << "Ошибка при ожидании подключения: " << GetLastError();
+            CloseHandle(hServerPipe);
+            return 0;
+        }
+        qDebug() << "Успешное подключение.\n";
 
-    // Ожидание соединения
-    if (!ConnectNamedPipe(hPipe, NULL)) {
-        qDebug() << "Error while waiting for connection: " << GetLastError();
-        cout << "Error while waiting for connection: " << GetLastError();
-        CloseHandle(hPipe);
-        return 0;
+        // Создание нового именованного канала для взаимодействия с клиентом
+        std::wstring clientPipeName = SERVERPIPE;
+        clientPipeName += std::to_wstring(GetCurrentThreadId());
+
+        HANDLE hClientPipe = CreateNamedPipe(
+            clientPipeName.c_str(),
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
+            PIPE_UNLIMITED_INSTANCES,
+            1024,
+            1024,
+            5000,
+            NULL
+            );
+
+        if (hClientPipe == INVALID_HANDLE_VALUE) {
+            qDebug() << "Ошибка создания канала для клиента: " << GetLastError();
+            CloseHandle(hServerPipe);
+            return 0;
+        }
+        qDebug() << "Канал для клиента успешно создан.\n";
+
+        // Создание потока для обслуживания клиента
+        CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&DepositDatabase::handleClient, (LPVOID)hClientPipe, 0, NULL);
+
+        QThread::sleep(1000);
+        qDebug() << "Ожидание следующего клиента.\n";
+
+        // Закрытие канала приема подключений
+        DisconnectNamedPipe(hServerPipe);
     }
 
-    if (!load()) {
-        qDebug() << "Error while loading database: " << GetLastError();
-        CloseHandle(hPipe);
-        return 0;
-    }
-    qDebug() << "Database successfully load.\n";
+    return 1;
+}
+
+DWORD WINAPI DepositDatabase::handleClient(LPVOID lpParam) {
+    DepositDatabase* db = static_cast<DepositDatabase*>(lpParam);
+    db->handleClientLogic(lpParam);
+
+    return 0;
+}
+
+// Функция для обслуживания клиента в отдельном потоке
+void DepositDatabase::handleClientLogic(LPVOID lpParam) {
+    HANDLE hClientPipe = (HANDLE)lpParam;
 
     const DWORD
         FINISH_REQ  = 0,
@@ -56,40 +102,100 @@ bool DepositDatabase::start() {
         COUNT_REQ   = 6,
         UPDATE_REQ  = 7;
 
-    Deposit rec;
+    int req;
+    DWORD bytesRead;
+
     do {
-        //Загрузка номера запроса
-        ReadFile(hPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
+        // Загрузка номера запроса
+        ReadFile(hClientPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
 
         switch (req) {
-            case APPEND_REQ:
-                append();
-                break;
-            case REMOVE_REQ:
-                remove();
-                break;
-            case SAVE_REQ:
-                save();
-                break;
-            case RECORD_REQ:
-                record();
-                break;
-            case RECORDS_REQ:
-                records();
-                break;
-            case COUNT_REQ:
-                count();
-                break;
-            case UPDATE_REQ:
-                update();
-                break;
+        case APPEND_REQ:
+            append();
+            break;
+        case REMOVE_REQ:
+            remove();
+            break;
+        case SAVE_REQ:
+            save();
+            break;
+        case RECORD_REQ:
+            record();
+            break;
+        case RECORDS_REQ:
+            records();
+            break;
+        case COUNT_REQ:
+            count();
+            break;
+        case UPDATE_REQ:
+            update();
+            break;
         }
     } while (req != FINISH_REQ);
 
-    qDebug() << "Disconnect successful.\n";
-
-    return 1;
+    qDebug() << "Отключение успешно.\n";
+    CloseHandle(hClientPipe);
 }
+
+/*
+while (true) {
+    // Создание именованного канала для приема подключений
+    HANDLE hServerPipe = CreateNamedPipe(
+        SERVERPIPE,
+        PIPE_ACCESS_DUPLEX,
+        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
+        PIPE_UNLIMITED_INSTANCES,
+        1024,
+        1024,
+        5000,
+        NULL
+    );
+
+    if (hServerPipe == INVALID_HANDLE_VALUE) {
+        qDebug() << "Error creating server channel: " << GetLastError();
+        return 0;
+    }
+    qDebug() << "Server channel created successfully.\n";
+
+    // Ожидание подключения клиента к каналу приема подключений
+    if (!ConnectNamedPipe(hServerPipe, NULL)) {
+        qDebug() << "Error while waiting for connection: " << GetLastError();
+        CloseHandle(hServerPipe);
+        return 0;
+    }
+    qDebug() << "Client connected to server channel.\n";
+
+    // Генерация уникального имени для канала взаимодействия с клиентом
+    std::string clientPipeName = "ClientPipe_" + std::to_string(GetCurrentThreadId());
+
+    // Создание именованного канала для взаимодействия с клиентом
+    HANDLE hClientPipe = CreateNamedPipe(
+        clientPipeName.c_str(),
+        PIPE_ACCESS_DUPLEX,
+        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
+        PIPE_UNLIMITED_INSTANCES,
+        1024,
+        1024,
+        5000,
+        NULL
+    );
+
+    if (hClientPipe == INVALID_HANDLE_VALUE) {
+        qDebug() << "Error creating client channel: " << GetLastError();
+        CloseHandle(hServerPipe);
+        return 0;
+    }
+    qDebug() << "Client channel created successfully.\n";
+
+    // Создание потока для обслуживания клиента
+    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&HandleClientThread, (LPVOID)hClientPipe, 0, NULL);
+
+    // Закрытие канала приема подключений
+    DisconnectNamedPipe(hServerPipe);
+    CloseHandle(hServerPipe);
+}
+*/
 
 
 // Загрузить файл c клиента
@@ -211,7 +317,7 @@ bool DepositDatabase::load() {
     HANDLE myFile = CreateFile(
         FILENAME,               // Имя файла
         GENERIC_READ,           // Желаемый доступ к файлу (здесь только чтение)
-        0,                      // Режим разделения (нельзя открывать другим процессам)
+        FILE_SHARE_READ | FILE_SHARE_WRITE,                      // Режим разделения (нельзя открывать другим процессам)
         NULL,                   // Атрибуты безопасности (не используется)
         OPEN_ALWAYS,            // Режим создания (создаем новый файл или перезаписываем существующий)
         FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)
@@ -278,7 +384,7 @@ bool DepositDatabase::save() {
     HANDLE myFile = CreateFile(
         FILENAME,               // Имя файла
         GENERIC_WRITE,          // Желаемый доступ к файлу (здесь только запись)
-        0,                      // Режим разделения (нельзя открывать другим процессам)
+        FILE_SHARE_READ | FILE_SHARE_WRITE,                      // Режим разделения (нельзя открывать другим процессам)
         NULL,                   // Атрибуты безопасности (не используется)
         CREATE_ALWAYS,          // Режим открытия (открываем существующий файл)
         FILE_ATTRIBUTE_NORMAL,  // Атрибуты файла (обычный файл)

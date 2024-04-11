@@ -11,15 +11,15 @@ bool DepositDatabase::connect() {
     si.cb = sizeof(si);
 
     // Создание нового процесса
-    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-    {
-        qDebug() << "Start server error: " << GetLastError();
-        return 0;
-    }
+//    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+//    {
+//        qDebug() << "Start server error: " << GetLastError();
+//        return 0;
+//    }
 
-    qDebug() << "Start server successful.\n";
+//    qDebug() << "Start server successful.\n";
 
-    QThread::msleep(1000);
+//    QThread::msleep(1000);
 
     hPipe = CreateFile(
         SERVERPIPE,                     // Имя канала

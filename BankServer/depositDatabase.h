@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <QThread>
 
 class DepositDatabase
 {
@@ -52,6 +53,9 @@ private:
 
     RecordRow toRecord(Deposit::D);
     Deposit::D fromRecord(RecordRow);
+
+    static DWORD WINAPI handleClient(LPVOID);
+    void handleClientLogic(LPVOID);
 };
 
 #endif // RECORD_H
