@@ -23,15 +23,14 @@ public:
         double amount; // сумма счета
     };
 
-    bool start();
-    bool append();
-    bool remove();
-    bool update();
+    bool append(HANDLE);
+    bool remove(HANDLE);
+    bool update(HANDLE);
     bool load();
     bool save();
-    bool record();
-    bool records();
-    bool count();
+    bool record(HANDLE);
+    bool records(HANDLE);
+    bool count(HANDLE);
     void clear();
     bool isModified() const;
 
@@ -41,9 +40,7 @@ private:
 
     const LPCTSTR FILENAME = TEXT("main.dd");
     const LPCTSTR SERVERNAME = TEXT("bankserver.exe");
-    const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 
-    HANDLE hPipe;
     DWORD mode, bytesWritten, bytesRead;
     char buffer[1024];
     int bufferSize = 1024;
@@ -53,9 +50,6 @@ private:
 
     RecordRow toRecord(Deposit::D);
     Deposit::D fromRecord(RecordRow);
-
-    static DWORD WINAPI handleClient(LPVOID);
-    void handleClientLogic(LPVOID);
 };
 
 #endif // RECORD_H

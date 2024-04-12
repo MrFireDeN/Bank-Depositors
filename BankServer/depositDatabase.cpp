@@ -5,201 +5,19 @@ using namespace std;
 
 DepositDatabase::DepositDatabase()
 {
+    setlocale(LC_ALL, "Russian");
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
 
-}
-
-// Запустить сервер
-bool DepositDatabase::start() {
     // Считать данные из файла
     if (!load()) {
         qDebug() << "Ошибка при загрузке базы данных: " << GetLastError();
-        CloseHandle(hPipe);
-        return 0;
     }
-    qDebug() << "База данных успешно загружена.\n";
-
-    // Создание именованного канала для приема подключений
-    HANDLE hServerPipe = CreateNamedPipe(
-        SERVERPIPE,
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
-        1024,
-        1024,
-        5000,
-        NULL
-        );
-
-    if (hServerPipe == INVALID_HANDLE_VALUE) {
-        qDebug() << "Ошибка создания канала: " << GetLastError();
-        return 0;
-    }
-    qDebug() << "Именованный канал успешно создан.\n";
-
-    // Цикл подключения клиентов
-    while (true) {
-        // Ожидание соединения
-        if (!ConnectNamedPipe(hServerPipe, NULL)) {
-            qDebug() << "Ошибка при ожидании подключения: " << GetLastError();
-            CloseHandle(hServerPipe);
-            return 0;
-        }
-        qDebug() << "Успешное подключение.\n";
-
-        // Создание нового именованного канала для взаимодействия с клиентом
-        std::wstring clientPipeName = SERVERPIPE;
-        clientPipeName += std::to_wstring(GetCurrentThreadId());
-
-        HANDLE hClientPipe = CreateNamedPipe(
-            clientPipeName.c_str(),
-            PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            PIPE_UNLIMITED_INSTANCES,
-            1024,
-            1024,
-            5000,
-            NULL
-            );
-
-        if (hClientPipe == INVALID_HANDLE_VALUE) {
-            qDebug() << "Ошибка создания канала для клиента: " << GetLastError();
-            CloseHandle(hServerPipe);
-            return 0;
-        }
-        qDebug() << "Канал для клиента успешно создан.\n";
-
-        // Создание потока для обслуживания клиента
-        CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&DepositDatabase::handleClient, (LPVOID)hClientPipe, 0, NULL);
-
-        QThread::sleep(1000);
-        qDebug() << "Ожидание следующего клиента.\n";
-
-        // Закрытие канала приема подключений
-        DisconnectNamedPipe(hServerPipe);
-    }
-
-    return 1;
+    qDebug() << "Базы данных успешно загружена!";
 }
-
-DWORD WINAPI DepositDatabase::handleClient(LPVOID lpParam) {
-    DepositDatabase* db = static_cast<DepositDatabase*>(lpParam);
-    db->handleClientLogic(lpParam);
-
-    return 0;
-}
-
-// Функция для обслуживания клиента в отдельном потоке
-void DepositDatabase::handleClientLogic(LPVOID lpParam) {
-    HANDLE hClientPipe = (HANDLE)lpParam;
-
-    const DWORD
-        FINISH_REQ  = 0,
-        APPEND_REQ  = 1,
-        REMOVE_REQ  = 2,
-        SAVE_REQ    = 3,
-        RECORD_REQ  = 4,
-        RECORDS_REQ = 5,
-        COUNT_REQ   = 6,
-        UPDATE_REQ  = 7;
-
-    int req;
-    DWORD bytesRead;
-
-    do {
-        // Загрузка номера запроса
-        ReadFile(hClientPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
-
-        switch (req) {
-        case APPEND_REQ:
-            append();
-            break;
-        case REMOVE_REQ:
-            remove();
-            break;
-        case SAVE_REQ:
-            save();
-            break;
-        case RECORD_REQ:
-            record();
-            break;
-        case RECORDS_REQ:
-            records();
-            break;
-        case COUNT_REQ:
-            count();
-            break;
-        case UPDATE_REQ:
-            update();
-            break;
-        }
-    } while (req != FINISH_REQ);
-
-    qDebug() << "Отключение успешно.\n";
-    CloseHandle(hClientPipe);
-}
-
-/*
-while (true) {
-    // Создание именованного канала для приема подключений
-    HANDLE hServerPipe = CreateNamedPipe(
-        SERVERPIPE,
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
-        1024,
-        1024,
-        5000,
-        NULL
-    );
-
-    if (hServerPipe == INVALID_HANDLE_VALUE) {
-        qDebug() << "Error creating server channel: " << GetLastError();
-        return 0;
-    }
-    qDebug() << "Server channel created successfully.\n";
-
-    // Ожидание подключения клиента к каналу приема подключений
-    if (!ConnectNamedPipe(hServerPipe, NULL)) {
-        qDebug() << "Error while waiting for connection: " << GetLastError();
-        CloseHandle(hServerPipe);
-        return 0;
-    }
-    qDebug() << "Client connected to server channel.\n";
-
-    // Генерация уникального имени для канала взаимодействия с клиентом
-    std::string clientPipeName = "ClientPipe_" + std::to_string(GetCurrentThreadId());
-
-    // Создание именованного канала для взаимодействия с клиентом
-    HANDLE hClientPipe = CreateNamedPipe(
-        clientPipeName.c_str(),
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
-        1024,
-        1024,
-        5000,
-        NULL
-    );
-
-    if (hClientPipe == INVALID_HANDLE_VALUE) {
-        qDebug() << "Error creating client channel: " << GetLastError();
-        CloseHandle(hServerPipe);
-        return 0;
-    }
-    qDebug() << "Client channel created successfully.\n";
-
-    // Создание потока для обслуживания клиента
-    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&HandleClientThread, (LPVOID)hClientPipe, 0, NULL);
-
-    // Закрытие канала приема подключений
-    DisconnectNamedPipe(hServerPipe);
-    CloseHandle(hServerPipe);
-}
-*/
-
 
 // Загрузить файл c клиента
-bool DepositDatabase::append() {
+bool DepositDatabase::append(HANDLE hPipe) {
     Deposit::D record;
 
     // id
@@ -254,7 +72,7 @@ int DepositDatabase::add(const Deposit& record) {
 }
 
 // Удаленить элемент из базы данных
-bool DepositDatabase::remove() {
+bool DepositDatabase::remove(HANDLE hPipe) {
     /*
     1. Удаляет запись из списка
     */
@@ -275,8 +93,8 @@ bool DepositDatabase::remove() {
     return 1;
 }
 
-bool DepositDatabase::update() {
-    if (!remove()){
+bool DepositDatabase::update(HANDLE hPipe) {
+    if (!remove(hPipe)){
         return 0;
     }
 
@@ -440,7 +258,7 @@ bool DepositDatabase::save() {
 }
 
 // Открыть запись для чтения
-bool DepositDatabase::record(){
+bool DepositDatabase::record(HANDLE hPipe){
     /*
     1. Сервер получет id
     2. Cервер возвращает запись
@@ -484,7 +302,7 @@ bool DepositDatabase::record(){
 }
 
 // Возвратить вектор записей
-bool DepositDatabase::records(){
+bool DepositDatabase::records(HANDLE hPipe){
     QVector<Deposit>::iterator i;
     Deposit::D d;
 
@@ -507,7 +325,7 @@ bool DepositDatabase::records(){
 }
 
 // Кол-во элементов
-bool DepositDatabase::count() {
+bool DepositDatabase::count(HANDLE hPipe) {
     int count = database.count();
 
 //    intToBuffer(count, buffer);
