@@ -10,17 +10,6 @@ bool DepositDatabase::connect() {
     ZeroMemory( &si, sizeof(si) );
     si.cb = sizeof(si);
 
-    // Создание нового процесса
-//    if (!CreateProcess(SERVERNAME, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-//    {
-//        qDebug() << "Start server error: " << GetLastError();
-//        return 0;
-//    }
-
-//    qDebug() << "Start server successful.\n";
-
-//    QThread::msleep(1000);
-
     hPipe = CreateFile(
         SERVERPIPE,                     // Имя канала
         GENERIC_READ | GENERIC_WRITE,   // Доступ к чтению и записи
@@ -53,13 +42,6 @@ bool DepositDatabase::disconnect() {
 
     // Закрытие дескриптора канала
     CloseHandle(hPipe);
-
-    // Закрытие дескрипторов процесса и потока
-    //CloseHandle(pi.hProcess);
-    //CloseHandle(pi.hThread);
-
-    // Обнуление дескрипторов процесса и потока
-    //ZeroMemory(&pi, sizeof(pi));
 
     return 1;
 }
