@@ -51,11 +51,11 @@ int main(int argc, char *argv[])
         // Создание потока для обслуживания клиента
         CreateThread(NULL, 0, handleClient, hServerPipe, 0, NULL);
 
-        QThread::sleep(1000);
+        QThread::sleep(1);
         qDebug() << "Ожидание следующего клиента.\n";
 
         // Создание именованного канала для приема подключений
-        HANDLE hServerPipe = CreateNamedPipe(
+        hServerPipe = CreateNamedPipe(
             SERVERPIPE,
             PIPE_ACCESS_DUPLEX,
             PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
