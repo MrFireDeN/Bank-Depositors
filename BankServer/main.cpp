@@ -36,8 +36,6 @@ int main(int argc, char *argv[])
     }
     qDebug() << "Именованный канал успешно создан.\n";
 
-    //dd = new DepositDatabase(hServerPipe);
-
     // Цикл подключения клиентов
     while (true) {
         // Ожидание соединения

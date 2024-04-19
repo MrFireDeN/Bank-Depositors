@@ -61,10 +61,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Открытие из базы данных
     openFile();
+
+    // Создайте и настройте таймер
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MainWindow::updateFiles); // Подключите слот updateFiles к сигналу timeout
+    timer->start(15000); // Запустите таймер с интервалом в 15 секунд
 }
 
 MainWindow::~MainWindow()
 {
+    // Остановите таймер и освободите ресурсы
+    timer->stop();
+    delete timer;
+
     // Сохрание в базу данных
     saveFile();
 
@@ -112,7 +121,7 @@ void MainWindow::on_recordCreate_clicked()
     deposit = *(new Deposit); // задаёт значение записи по умолчанию
 
     recordType = dd.append(deposit); // добавляет запись в базу данных
-    addRow(deposit); // добавляет новую запись в браузер
+    addRow(deposit, recordType); // добавляет новую запись в браузер
 
     // Показывает интерфейс при наличии записей
     if(dd.count() == 1)
@@ -137,8 +146,8 @@ void MainWindow::on_recordSave_clicked()
         deposit.id = rr[i].id;
         deposit.accountNumber = rr[i].accountNumber;
         deposit.amount = rr[i].amount;
-        recordType = i;
-        addRow(deposit);
+        //recordType = i;
+        addRow(deposit, i);
     }
 
     if(dd.count() > 0){
@@ -187,7 +196,7 @@ void MainWindow::on_recordBrowserButton_clicked()
     for (int i = 0; i < 10; i++) {
         rr.setRecord(deposit);
         recordType = dd.append(deposit);
-        addRow(deposit);
+        addRow(deposit, recordType);
 
         if(dd.count() == 1)
             setUIEnabled(true);
@@ -202,23 +211,23 @@ void MainWindow::on_recordBrowserButton_clicked()
 }
 
 // Добавить строку в браузер
-void MainWindow::addRow(Deposit &deposit) {
-    ui->recordBrowserTable->insertRow(recordType); // вставка новой строки
+void MainWindow::addRow(Deposit &deposit, int row) {
+    ui->recordBrowserTable->insertRow(row); // вставка новой строки
 
     QTableWidgetItem *item; // создание элемента
 
     // заполнение строки
     item = new QTableWidgetItem(deposit.accountNumber);
-    ui->recordBrowserTable->setItem(recordType, 0, item);
+    ui->recordBrowserTable->setItem(row, 0, item);
     QString amount;
     int rub = (int) deposit.amount;
     int kop = (int) ((deposit.amount - rub) * 100 + 0.1);
     amount = QString("%1 руб. %2 коп.").arg(rub).arg(kop);
                  item = new QTableWidgetItem(amount);
-    ui->recordBrowserTable->setItem(recordType, 1, item);
-    ui->recordBrowserTable->item(recordType, 0)->setData(Qt::UserRole, deposit.id);
+    ui->recordBrowserTable->setItem(row, 1, item);
+    ui->recordBrowserTable->item(row, 0)->setData(Qt::UserRole, deposit.id);
 
-    ui->recordBrowserTable->selectRow(recordType); // выделение строки
+    ui->recordBrowserTable->selectRow(row); // выделение строки
 }
 
 // Поиск выбранного элемента в QGroupBox
@@ -290,8 +299,8 @@ void MainWindow::openFile(){
             deposit.id = rr[i].id;
             deposit.accountNumber = rr[i].accountNumber;
             deposit.amount = rr[i].amount;
-            recordType = i;
-            addRow(deposit);
+            //recordType = i;
+            addRow(deposit, i);
         }
 
         if(dd.count() > 0){
@@ -310,38 +319,15 @@ void MainWindow::saveFile() {
         QMessageBox::information(nullptr, "Ошибка", "Файл не сохранен");
 }
 
-//// Открыть файл базы данных
-//void MainWindow::on_openFileButton_clicked()
-//{
-//    Filename = QFileDialog::getOpenFileName(this,
-//                QString("Открыть файл"),
-//                QString(),
-//                QString("База депозитов (*.dd);;"
-//                        "Все файлы (*.*)"));
+// Функция для обновления файлов
+void MainWindow::updateFiles()
+{
+    Deposit d = deposit;
 
-//    openFile();
-//}
+    openFile();
+    saveFile();
 
-//// Сохранить файл базы данных
-//void MainWindow::on_saveFileButon_clicked()
-//{
-//    if (Filename.isEmpty()) {
-//        on_saveAsFileButton_clicked();
-//        return;
-//    }
+    showDeposit(d);
 
-//    saveFile();
-//}
-
-
-//void MainWindow::on_saveAsFileButton_clicked()
-//{
-//    Filename = QFileDialog::getSaveFileName(this,
-//                                            QString("Сохранить файл"),
-//                                            QString(),
-//                                            QString("База депозитов (*.dd)"));
-
-
-//    saveFile();
-//}
-
+    qDebug() << "Data changed";
+}

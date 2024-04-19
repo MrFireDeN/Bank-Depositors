@@ -11,6 +11,7 @@
 #include "randomrecord.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;
@@ -37,7 +38,7 @@ private slots:
     void showDeposit(Deposit&);
     int whichRadioButtonChecked(QList <QRadioButton*>);
     void setUIEnabled(bool);
-    void addRow(Deposit&);
+    void addRow(Deposit&, int);
 
     void on_depositAmountNumber_valueChanged(double);
     void on_recordSave_clicked();
@@ -50,12 +51,14 @@ private slots:
 
     void openFile();
     void saveFile();
-//    void on_openFileButton_clicked();
-//    void on_saveFileButon_clicked();
-//    void on_saveAsFileButton_clicked();
+
+
+    void updateFiles();
 
 private:
     Ui::MainWindow *ui;
+
+    QTimer *timer;
 };
 
 #endif // MAINWINDOW_H
