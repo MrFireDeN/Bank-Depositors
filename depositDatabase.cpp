@@ -55,11 +55,11 @@ bool DepositDatabase::disconnect() {
     CloseHandle(hPipe);
 
     // Закрытие дескрипторов процесса и потока
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    //CloseHandle(pi.hProcess);
+    //CloseHandle(pi.hThread);
 
     // Обнуление дескрипторов процесса и потока
-    ZeroMemory(&pi, sizeof(pi));
+    //ZeroMemory(&pi, sizeof(pi));
 
     return 1;
 }
