@@ -6,8 +6,12 @@
 const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 DepositDatabase* dd;
 
+// Констуктор функий
 DWORD WINAPI handleClient(HANDLE);
 BOOL WINAPI ConsoleCtrlHandler(DWORD);
+DWORD WINAPI saveDataPeriodically(LPVOID);
+
+HANDLE hSaveThread;
 
 // Создание критических секций
 CRITICAL_SECTION TOTAL_BLOCK;
@@ -29,6 +33,9 @@ int main(int argc, char *argv[])
 
     // Установка обработчика событий консоли
     SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
+
+    // Создание потока для периодического сохранения данных
+    hSaveThread = CreateThread(NULL, 0, saveDataPeriodically, NULL, 0, NULL);
 
     // Создание именованного канала для приема подключений
     HANDLE hServerPipe = CreateNamedPipe(
@@ -115,7 +122,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выполнить добавление записи
             dd->append(hClientPipe);
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять полную блокировку
             LeaveCriticalSection(&TOTAL_BLOCK);
@@ -126,7 +133,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выполнить удаление записи
             dd->remove(hClientPipe);
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять полную блокировку
             LeaveCriticalSection(&TOTAL_BLOCK);
@@ -141,7 +148,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выполнить сохранение записей
             dd->save();
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять частичную блокировку
             LeaveCriticalSection(&LOCAL_BLOCK);
@@ -156,7 +163,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выпонить возвращение записи
             dd->record(hClientPipe);
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять частичную блокировку
             LeaveCriticalSection(&LOCAL_BLOCK);
@@ -171,7 +178,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выполнить возвращение вектора записей
             dd->records(hClientPipe);
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять частичную блокировку
             LeaveCriticalSection(&LOCAL_BLOCK);
@@ -186,7 +193,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выполнить возвращение кол-во записей
             dd->count(hClientPipe);
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять частичную блокировку
             LeaveCriticalSection(&LOCAL_BLOCK);
@@ -197,7 +204,7 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
             // Выполнить обновление записи
             dd->update(hClientPipe);
-            QThread::sleep(1);
+            Sleep(1000);
 
             // Снять полную блокировку
             LeaveCriticalSection(&TOTAL_BLOCK);
@@ -223,8 +230,35 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType) {
         // Удалить объект критической секции
         DeleteCriticalSection(&TOTAL_BLOCK);
         DeleteCriticalSection(&LOCAL_BLOCK);
+
+        // Ожидание завершения работы потока
+        WaitForSingleObject(hSaveThread, INFINITE);
+        CloseHandle(hSaveThread);
         return TRUE;
     default:
         return FALSE;
     }
+}
+
+DWORD WINAPI saveDataPeriodically(LPVOID lpParam) {
+    while (true) {
+        // Установить полную блокировку
+        EnterCriticalSection(&TOTAL_BLOCK);
+        // Установить частичную блокировку
+        EnterCriticalSection(&LOCAL_BLOCK);
+        // Снять полную блокировку
+        LeaveCriticalSection(&TOTAL_BLOCK);
+
+        // Сохранение данных
+        dd->save();
+        qDebug() << "Данные сохранены.";
+
+        // Снять частичную блокировку
+        LeaveCriticalSection(&LOCAL_BLOCK);
+
+        // Подождать 15 секунд
+        Sleep(15000); // 15 секунд в миллисекундах
+    }
+
+    return 0;
 }
