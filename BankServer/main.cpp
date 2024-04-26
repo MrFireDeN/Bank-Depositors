@@ -7,6 +7,11 @@ const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 DepositDatabase* dd;
 
 DWORD WINAPI handleClient(HANDLE);
+BOOL WINAPI ConsoleCtrlHandler(DWORD);
+
+// Создание критических секций
+CRITICAL_SECTION TOTAL_BLOCK;
+CRITICAL_SECTION LOCAL_BLOCK;
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +22,13 @@ int main(int argc, char *argv[])
     SetConsoleOutputCP(CP_UTF8);
 
     dd = new DepositDatabase();
+
+    // Инициализировать объект критической секции
+    InitializeCriticalSection(&TOTAL_BLOCK);
+    InitializeCriticalSection(&LOCAL_BLOCK);
+
+    // Установка обработчика событий консоли
+    SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
     // Создание именованного канала для приема подключений
     HANDLE hServerPipe = CreateNamedPipe(
@@ -72,7 +84,6 @@ int main(int argc, char *argv[])
     }
 
     QCoreApplication::quit();
-
     return a.exec();
 }
 
@@ -99,29 +110,121 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
         switch (req) {
         case APPEND_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+
+            // Выполнить добавление записи
             dd->append(hClientPipe);
+            QThread::sleep(1);
+
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
             break;
         case REMOVE_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+
+            // Выполнить удаление записи
             dd->remove(hClientPipe);
+            QThread::sleep(1);
+
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
             break;
         case SAVE_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+            // Установить частичную блокировку
+            EnterCriticalSection(&LOCAL_BLOCK);
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
+
+            // Выполнить сохранение записей
             dd->save();
+            QThread::sleep(1);
+
+            // Снять частичную блокировку
+            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
         case RECORD_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+            // Установить частичную блокировку
+            EnterCriticalSection(&LOCAL_BLOCK);
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
+
+            // Выпонить возвращение записи
             dd->record(hClientPipe);
+            QThread::sleep(1);
+
+            // Снять частичную блокировку
+            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
         case RECORDS_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+            // Установить частичную блокировку
+            EnterCriticalSection(&LOCAL_BLOCK);
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
+
+            // Выполнить возвращение вектора записей
             dd->records(hClientPipe);
+            QThread::sleep(1);
+
+            // Снять частичную блокировку
+            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
         case COUNT_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+            // Установить частичную блокировку
+            EnterCriticalSection(&LOCAL_BLOCK);
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
+
+            // Выполнить возвращение кол-во записей
             dd->count(hClientPipe);
+            QThread::sleep(1);
+
+            // Снять частичную блокировку
+            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
         case UPDATE_REQ:
+            // Установить полную блокировку
+            EnterCriticalSection(&TOTAL_BLOCK);
+
+            // Выполнить обновление записи
             dd->update(hClientPipe);
+            QThread::sleep(1);
+
+            // Снять полную блокировку
+            LeaveCriticalSection(&TOTAL_BLOCK);
             break;
         }
     } while (req != FINISH_REQ);
 
     qDebug() << "Отключение успешно.\n";
     CloseHandle(hClientPipe);
+}
+
+BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType) {
+    switch (dwCtrlType) {
+    case CTRL_CLOSE_EVENT:
+        // Установить полную блокировку
+        EnterCriticalSection(&TOTAL_BLOCK);
+
+        delete(dd);
+
+        // Снять полную блокировку
+        LeaveCriticalSection(&TOTAL_BLOCK);
+
+        // Удалить объект критической секции
+        DeleteCriticalSection(&TOTAL_BLOCK);
+        DeleteCriticalSection(&LOCAL_BLOCK);
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
