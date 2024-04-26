@@ -15,6 +15,7 @@ class DepositDatabase
 {
 public:
     DepositDatabase();
+    ~DepositDatabase();
 
     struct RecordRow
     {

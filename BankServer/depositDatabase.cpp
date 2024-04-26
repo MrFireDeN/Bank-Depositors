@@ -16,6 +16,10 @@ DepositDatabase::DepositDatabase()
     qDebug() << "Базы данных успешно загружена!";
 }
 
+DepositDatabase::~DepositDatabase() {
+    save();
+}
+
 // Загрузить файл c клиента
 bool DepositDatabase::append(HANDLE hPipe) {
     Deposit::D record;
