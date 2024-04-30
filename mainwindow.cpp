@@ -7,6 +7,16 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    connect(ui->recordCreate, SIGNAL(clicked(bool)), this, SLOT(createRecord()));
+    connect(ui->recordSave, SIGNAL(clicked(bool)), this, SLOT(saveRecord()));
+    connect(ui->recordDelete, SIGNAL(clicked(bool)), this, SLOT(removeRecord()));
+    connect(ui->recordBrowserButton, SIGNAL(clicked(bool)), this, SLOT(createRandomRecords()));
+
+    connect(ui->fullnameLine, SIGNAL(textChanged(QString)), this, SLOT(checkFIO));
+    connect(ui->depositAmountNumber, SIGNAL(valueChanged(double)), this, SLOT(checkDepositAmount(double)));
+    connect(ui->accountNumberLine, SIGNAL(textChanged(QString)), this, SLOT(checkAccountNumber()));
+    connect(ui->recordBrowserTable, SIGNAL(cellClicked(int,int)), this, SLOT(selectRecord(int)));
+
     // ФИО
     QValidator *fio = new FIOValidator(this);
     ui->fullnameLine->setValidator(fio);
@@ -49,10 +59,8 @@ MainWindow::MainWindow(QWidget *parent) :
     accrualFrequency.append(ui->annually); // ежегодно
 
     // Вывод интерфейса
-    on_fullnameLine_textEdited();
-    on_accountNumberLine_textEdited();
-
-    setUIEnabled(false);
+    checkFIO();
+    checkAccountNumber();
 
     srand(time(0));
 
@@ -66,6 +74,22 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::updateFiles); // Подключите слот updateFiles к сигналу timeout
     timer->start(15000); // Запустите таймер с интервалом в 15 секунд
+}
+
+// Функция для обновления файлов
+void MainWindow::updateFiles()
+{
+    saveDeposit(deposit);
+    Deposit currentRecord = deposit;
+
+    openFile();
+
+    showRecords();
+
+    deposit = currentRecord;
+    showDeposit(deposit);
+
+    qDebug() << "Data changed";
 }
 
 MainWindow::~MainWindow()
@@ -111,12 +135,12 @@ void MainWindow::showDeposit(Deposit& deposit) {
     ui->plasticCardAvailability->setChecked(deposit.plasticCardAvailability);
     depositType[deposit.type]->setChecked(true);
     accrualFrequency[deposit.accrualFrequency]->setChecked(true);
-    on_accountNumberLine_textEdited();
-    on_fullnameLine_textEdited();
+    checkAccountNumber();
+    checkFIO();
 }
 
 // Создать запись
-void MainWindow::on_recordCreate_clicked()
+void MainWindow::createRecord()
 {
     deposit = *(new Deposit); // задаёт значение записи по умолчанию
 
@@ -127,42 +151,32 @@ void MainWindow::on_recordCreate_clicked()
 }
 
 // Сохранить запись
-void MainWindow::on_recordSave_clicked()
+void MainWindow::saveRecord()
 {
     saveDeposit(deposit); // сохраняет значение из виджетов в запись из браузера
     recordType = dd.update(deposit); // обновляет запись в базе данных
+
+    for (int i = 0; i < ui->recordBrowserTable->rowCount(); ++i) {
+        qDebug() << ui->recordBrowserTable->item(i, 0)->data(Qt::UserRole).toInt();
+    }
 
     showRecords();
 }
 
 // Удалить запись
-void MainWindow::on_recordDelete_clicked()
+void MainWindow::removeRecord()
 {
     dd.remove(deposit.id); // удаляет запись из базы данных
-    showRecords();
 
     // фокус на предыдущию запись если, прошлая была последней
     if (recordType == dd.count() && recordType > 0)
         recordType--;
 
-    on_recordBrowserTable_cellClicked(recordType, 0); // фокус на запись
-}
-
-// Выбрать запись из браузера
-void MainWindow::on_recordBrowserTable_cellClicked(int row, int column)
-{
-    recordType = row; // присваивание строки
-
-    // нахождение элемента по id
-    unsigned int id = ui->recordBrowserTable->item(recordType, 0)->data(Qt::UserRole).toInt();
-    dd.record(id, deposit);
-    showDeposit(deposit);
-
-    ui->recordBrowserTable->selectRow(recordType); // фокус на строку
+    showRecords();
 }
 
 // Добавить 10 случайных записей
-void MainWindow::on_recordBrowserButton_clicked()
+void MainWindow::createRandomRecords()
 {
     RandomRecord randomRecord;
 
@@ -175,6 +189,19 @@ void MainWindow::on_recordBrowserButton_clicked()
     showDeposit(deposit);
 }
 
+// Выбрать запись из браузера
+void MainWindow::selectRecord(int row)
+{
+    recordType = row; // присваивание строки
+
+    // нахождение элемента по id
+    unsigned int id = ui->recordBrowserTable->item(recordType, 0)->data(Qt::UserRole).toInt();
+    dd.record(id, deposit);
+    showDeposit(deposit);
+
+    ui->recordBrowserTable->selectRow(recordType); // фокус на строку
+}
+
 // Добавить строку в браузер
 void MainWindow::addRow(Deposit &deposit, int row) {
     ui->recordBrowserTable->insertRow(row); // вставка новой строки
@@ -183,15 +210,14 @@ void MainWindow::addRow(Deposit &deposit, int row) {
 
     // заполнение строки
     item = new QTableWidgetItem(deposit.accountNumber);
+    item->setData(Qt::UserRole, deposit.id);
 
     ui->recordBrowserTable->setItem(row, 0, item);
     QString amount;
     int rub = (int) deposit.amount;
     int kop = (int) ((deposit.amount - rub) * 100 + 0.1);
     amount = QString("%1 руб. %2 коп.").arg(rub).arg(kop);
-                 item = new QTableWidgetItem(amount);
-
-    item->setData(Qt::UserRole, deposit.id);
+    item = new QTableWidgetItem(amount);
 
     ui->recordBrowserTable->setItem(row, 1, item);
 }
@@ -211,7 +237,7 @@ void MainWindow::showRecords() {
 
     if(dd.count() > 0) {
         setUIEnabled(true);
-        on_recordBrowserTable_cellClicked(recordType, 0);
+        selectRecord(recordType);
         ui->recordBrowserTable->selectRow(recordType); // выделение строки
     }
     else {
@@ -226,39 +252,6 @@ int MainWindow::whichRadioButtonChecked(QList <QRadioButton*> rd) {
             return i;
     }
     return 0;
-}
-
-// Если сумму депозита изменили
-void MainWindow::on_depositAmountNumber_valueChanged(double value)
-{
-    //Если сумма вклада равна нулю сделать окна "Процент по вкладу" и "Переодичность начисления" неактивными
-    if (value <= 0){
-        ui->depositInterest->setEnabled(false);
-        ui->accrualFrequency->setEnabled(false);
-    }
-    else {
-        ui->depositInterest->setEnabled(true);
-        ui->accrualFrequency->setEnabled(true);
-    }
-    ui->lastDepositTransactionDate->setDate(QDate::currentDate());
-}
-
-// Проверка введенного ФИО на корректность
-void MainWindow::on_fullnameLine_textEdited()
-{
-    if(ui->fullnameLine->hasAcceptableInput())
-        ui->fullnameError->hide();
-    else
-        ui->fullnameError->show();
-}
-
-// Проверка введенного номера счета на корректность
-void MainWindow::on_accountNumberLine_textEdited()
-{
-    if (ui->accountNumberLine->text().length() == 20)
-        ui->accountNumberError->hide();
-    else
-        ui->accountNumberError->show();
 }
 
 // Сделать полей редактирования (не)активными
@@ -290,15 +283,35 @@ void MainWindow::saveFile() {
         QMessageBox::information(nullptr, "Ошибка", "Файл не сохранен");
 }
 
-// Функция для обновления файлов
-void MainWindow::updateFiles()
+// Проверка суммы вклада
+void MainWindow::checkDepositAmount(double value)
 {
-    Deposit record = deposit;
+    //Если сумма вклада равна нулю сделать окна "Процент по вкладу" и "Переодичность начисления" неактивными
+    if (value <= 0){
+        ui->depositInterest->setEnabled(false);
+        ui->accrualFrequency->setEnabled(false);
+    }
+    else {
+        ui->depositInterest->setEnabled(true);
+        ui->accrualFrequency->setEnabled(true);
+    }
+    ui->lastDepositTransactionDate->setDate(QDate::currentDate());
+}
 
-    openFile();
+// Проверка введенного ФИО на корректность
+void MainWindow::checkFIO()
+{
+    if(ui->fullnameLine->hasAcceptableInput())
+        ui->fullnameError->hide();
+    else
+        ui->fullnameError->show();
+}
 
-    showRecords();
-    showDeposit(record);
-
-    qDebug() << "Data changed";
+// Проверка введенного номера счета на корректность
+void MainWindow::checkAccountNumber()
+{
+    if (ui->accountNumberLine->text().length() == 20)
+        ui->accountNumberError->hide();
+    else
+        ui->accountNumberError->show();
 }

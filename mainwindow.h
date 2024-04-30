@@ -34,27 +34,28 @@ public:
     QString Filename = "main.dd";
 
 private slots:
+    void updateFiles();
+
     void saveDeposit(Deposit&);
     void showDeposit(Deposit&);
-    int whichRadioButtonChecked(QList <QRadioButton*>);
-    void setUIEnabled(bool);
+
+    void createRecord();
+    void saveRecord();
+    void removeRecord();
+    void createRandomRecords();
+
+    void selectRecord(int);
     void addRow(Deposit&, int);
     void showRecords();
-
-    void on_depositAmountNumber_valueChanged(double);
-    void on_recordSave_clicked();
-    void on_fullnameLine_textEdited();
-    void on_accountNumberLine_textEdited();
-    void on_recordCreate_clicked();
-    void on_recordBrowserTable_cellClicked(int row, int column);
-    void on_recordDelete_clicked();
-    void on_recordBrowserButton_clicked();
 
     void openFile();
     void saveFile();
 
-
-    void updateFiles();
+    void setUIEnabled(bool);
+    int whichRadioButtonChecked(QList <QRadioButton*>);
+    void checkDepositAmount(double);
+    void checkFIO();
+    void checkAccountNumber();
 
 private:
     Ui::MainWindow *ui;
