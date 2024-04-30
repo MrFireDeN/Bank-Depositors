@@ -15,7 +15,6 @@ HANDLE hSaveThread;
 
 // Создание критических секций
 CRITICAL_SECTION TOTAL_BLOCK;
-CRITICAL_SECTION LOCAL_BLOCK;
 
 int main(int argc, char *argv[])
 {
@@ -29,7 +28,6 @@ int main(int argc, char *argv[])
 
     // Инициализировать объект критической секции
     InitializeCriticalSection(&TOTAL_BLOCK);
-    InitializeCriticalSection(&LOCAL_BLOCK);
 
     // Установка обработчика событий консоли
     SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
@@ -115,105 +113,58 @@ DWORD WINAPI handleClient(HANDLE pipe) {
         ReadFile(hClientPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
         qDebug() << req;
 
+        // Установить полную блокировку
+        EnterCriticalSection(&TOTAL_BLOCK);
+
         switch (req) {
+
+        // Выполнить добавление записи
         case APPEND_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-
-            // Выполнить добавление записи
             dd->append(hClientPipe);
-            Sleep(1000);
-
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
             break;
+
+        // Выполнить удаление записи
         case REMOVE_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-
-            // Выполнить удаление записи
             dd->remove(hClientPipe);
-            Sleep(1000);
-
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
             break;
+
+        // Выполнить сохранение записей
         case SAVE_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-            // Установить частичную блокировку
-            EnterCriticalSection(&LOCAL_BLOCK);
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
-
-            // Выполнить сохранение записей
             dd->save();
-            Sleep(1000);
-
-            // Снять частичную блокировку
-            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
+
+        // Выпонить возвращение записи
         case RECORD_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-            // Установить частичную блокировку
-            EnterCriticalSection(&LOCAL_BLOCK);
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
-
-            // Выпонить возвращение записи
             dd->record(hClientPipe);
-            Sleep(1000);
-
-            // Снять частичную блокировку
-            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
+
+        // Выполнить возвращение вектора записей
         case RECORDS_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-            // Установить частичную блокировку
-            EnterCriticalSection(&LOCAL_BLOCK);
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
-
-            // Выполнить возвращение вектора записей
             dd->records(hClientPipe);
-            Sleep(1000);
-
-            // Снять частичную блокировку
-            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
+
+        // Выполнить возвращение кол-во записей
         case COUNT_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-            // Установить частичную блокировку
-            EnterCriticalSection(&LOCAL_BLOCK);
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
-
-            // Выполнить возвращение кол-во записей
             dd->count(hClientPipe);
-            Sleep(1000);
-
-            // Снять частичную блокировку
-            LeaveCriticalSection(&LOCAL_BLOCK);
             break;
+
+        // Выполнить обновление записи
         case UPDATE_REQ:
-            // Установить полную блокировку
-            EnterCriticalSection(&TOTAL_BLOCK);
-
-            // Выполнить обновление записи
             dd->update(hClientPipe);
-            Sleep(1000);
-
-            // Снять полную блокировку
-            LeaveCriticalSection(&TOTAL_BLOCK);
             break;
         }
+
+        // Пауза для проверки работы
+        Sleep(1000);
+
+        // Снять полную блокировку
+        LeaveCriticalSection(&TOTAL_BLOCK);
     } while (req != FINISH_REQ);
 
     qDebug() << "Отключение успешно.\n";
     CloseHandle(hClientPipe);
+
+    return TRUE;
 }
 
 BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType) {
@@ -224,12 +175,11 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType) {
 
         delete(dd);
 
-        // Снять полную блокировку
-        LeaveCriticalSection(&TOTAL_BLOCK);
-
         // Удалить объект критической секции
         DeleteCriticalSection(&TOTAL_BLOCK);
-        DeleteCriticalSection(&LOCAL_BLOCK);
+
+        // Снять полную блокировку
+        //LeaveCriticalSection(&TOTAL_BLOCK);
 
         // Ожидание завершения работы потока
         WaitForSingleObject(hSaveThread, INFINITE);
@@ -244,17 +194,13 @@ DWORD WINAPI saveDataPeriodically(LPVOID lpParam) {
     while (true) {
         // Установить полную блокировку
         EnterCriticalSection(&TOTAL_BLOCK);
-        // Установить частичную блокировку
-        EnterCriticalSection(&LOCAL_BLOCK);
-        // Снять полную блокировку
-        LeaveCriticalSection(&TOTAL_BLOCK);
 
         // Сохранение данных
         dd->save();
         qDebug() << "Данные сохранены.";
 
-        // Снять частичную блокировку
-        LeaveCriticalSection(&LOCAL_BLOCK);
+        // Снять полную блокировку
+        LeaveCriticalSection(&TOTAL_BLOCK);
 
         // Подождать 15 секунд
         Sleep(15000); // 15 секунд в миллисекундах
