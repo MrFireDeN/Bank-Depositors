@@ -316,7 +316,7 @@ bool DepositDatabase::records(HANDLE hPipe){
         return 0;
     }
 
-    for (i = database.end()-1; i != database.begin()-1; --i){
+    for (i = database.begin(); i != database.end(); ++i) {
         d = Deposit::toStruct(*i);
 
         WriteFile(hPipe, (LPVOID)&d.id, sizeof(d.id), &bytesWritten, NULL);
