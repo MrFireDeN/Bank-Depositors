@@ -1,7 +1,4 @@
 #include "depositDatabase.h"
-#include <iostream>
-
-using namespace std;
 
 DepositDatabase::DepositDatabase()
 {
@@ -22,34 +19,34 @@ DepositDatabase::~DepositDatabase() {
 
 // Загрузить файл c клиента
 bool DepositDatabase::append(HANDLE hPipe) {
-    Deposit::D record;
+    DepositCPY recordCPY;
 
     // id
     //ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
     // Номер счета
-    ReadFile(hPipe, (LPVOID)&record.accountNumber, sizeof(record.accountNumber), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
     // Тип вклада
-    ReadFile(hPipe, (LPVOID)&record.type, sizeof(record.type), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
     // ФИО
-    ReadFile(hPipe, (LPVOID)&record.FIO, sizeof(record.FIO), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
     // Дата рождения
-    ReadFile(hPipe, (LPVOID)&record.birthDate, sizeof(record.birthDate), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
     // Сумма вклада
-    ReadFile(hPipe, (LPVOID)&record.amount, sizeof(record.amount), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
     // Процент вклада
-    ReadFile(hPipe, (LPVOID)&record.interest, sizeof(record.interest), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
     // Переодичность начисления
-    ReadFile(hPipe, (LPVOID)&record.accrualFrequency, sizeof(record.accrualFrequency), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
     // Последняя транзакция
-    ReadFile(hPipe, (LPVOID)&record.lastTransaction, sizeof(record.lastTransaction), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
     // Наличие пластиковой карты
-    ReadFile(hPipe, (LPVOID)&record.plasticCardAvailability, sizeof(record.plasticCardAvailability), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
-    Deposit deposit = Deposit::fromStruct(record);
-    deposit.id = ++id;
-    pos = add(deposit);
+    Deposit record = fromStruct(recordCPY);
+    record.id = ++id;
+    pos = add(record);
 
-    WriteFile(hPipe, (LPCVOID)&deposit.id, sizeof(unsigned int), &bytesWritten, NULL);
+    WriteFile(hPipe, (LPCVOID)&record.id, sizeof(unsigned int), &bytesWritten, NULL);
     WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
 
     return 1;
@@ -77,11 +74,6 @@ int DepositDatabase::add(const Deposit& record) {
 
 // Удаленить элемент из базы данных
 bool DepositDatabase::remove(HANDLE hPipe) {
-    /*
-    1. Удаляет запись из списка
-    */
-
-
     unsigned int tempID;
     ReadFile(hPipe, (LPVOID)&tempID, sizeof(tempID), &bytesRead, NULL);
 
@@ -102,31 +94,31 @@ bool DepositDatabase::update(HANDLE hPipe) {
         return 0;
     }
 
-    Deposit::D record;
+    DepositCPY recordCPY;
 
     // id
     //ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
     // Номер счета
-    ReadFile(hPipe, (LPVOID)&record.accountNumber, sizeof(record.accountNumber), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
     // Тип вклада
-    ReadFile(hPipe, (LPVOID)&record.type, sizeof(record.type), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
     // ФИО
-    ReadFile(hPipe, (LPVOID)&record.FIO, sizeof(record.FIO), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
     // Дата рождения
-    ReadFile(hPipe, (LPVOID)&record.birthDate, sizeof(record.birthDate), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
     // Сумма вклада
-    ReadFile(hPipe, (LPVOID)&record.amount, sizeof(record.amount), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
     // Процент вклада
-    ReadFile(hPipe, (LPVOID)&record.interest, sizeof(record.interest), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
     // Переодичность начисления
-    ReadFile(hPipe, (LPVOID)&record.accrualFrequency, sizeof(record.accrualFrequency), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
     // Последняя транзакция
-    ReadFile(hPipe, (LPVOID)&record.lastTransaction, sizeof(record.lastTransaction), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
     // Наличие пластиковой карты
-    ReadFile(hPipe, (LPVOID)&record.plasticCardAvailability, sizeof(record.plasticCardAvailability), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
-    Deposit deposit = Deposit::fromStruct(record);
-    pos = add(deposit);
+    Deposit record = fromStruct(recordCPY);
+    pos = add(record);
 
     WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
 
@@ -154,7 +146,7 @@ bool DepositDatabase::load() {
     database.clear();
 
     //QVector<Deposit>::iterator i;
-    Deposit::D d;
+    DepositCPY recordCPY;
     DWORD bytesRead;
     int counts;
 
@@ -171,28 +163,31 @@ bool DepositDatabase::load() {
     for (int i = 0; i < counts; ++i)
     {
         // id
-        ReadFile(myFile, (void*)&d.id, sizeof(d.id), &bytesRead, NULL);
+        ReadFile(myFile, (void*)&recordCPY.id, sizeof(recordCPY.id), &bytesRead, NULL);
         // Номер счета
-        ReadFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
         // Тип вклада
-        ReadFile(myFile, &d.type, sizeof(d.type), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
         // ФИО
-        ReadFile(myFile, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
         // Дата рождения
-        ReadFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
         // Сумма вклада
-        ReadFile(myFile, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
         // Процент вклада
-        ReadFile(myFile, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
         // Переодичность начисления
-        ReadFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
         // Последняя транзакция
-        ReadFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
         // Наличие пластиковой карты
-        ReadFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+        ReadFile(myFile, &recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
-        add(Deposit::fromStruct(d));
-        id = d.id;
+        add(fromStruct(recordCPY));
+
+        if (recordCPY.id && recordCPY.id > id) {
+            id = recordCPY.id;
+        }
     }
 
     CloseHandle(myFile);
@@ -224,7 +219,7 @@ bool DepositDatabase::save() {
     }
 
     QVector<Deposit>::iterator i;
-    Deposit::D d;
+    DepositCPY recordCPY;
     DWORD bytesRead;
     int counts = database.count();
 
@@ -232,28 +227,28 @@ bool DepositDatabase::save() {
 
 
     for (i = database.end()-1; i != database.begin()-1; --i) {
-        d = Deposit::toStruct(*i);
+        recordCPY = toStruct(*i);
 
         // id
-        WriteFile(myFile, &d.id, sizeof(d.id), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.id, sizeof(recordCPY.id), &bytesRead, NULL);
         // Номер счета
-        WriteFile(myFile, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
         // Тип вклада
-        WriteFile(myFile, &d.type, sizeof(d.type), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
         // ФИО
-        WriteFile(myFile, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
         // Дата рождения
-        WriteFile(myFile, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
         // Сумма вклада
-        WriteFile(myFile, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
         // Процент вклада
-        WriteFile(myFile, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
         // Переодичность начисления
-        WriteFile(myFile, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
         // Последняя транзакция
-        WriteFile(myFile, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
         // Наличие пластиковой карты
-        WriteFile(myFile, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+        WriteFile(myFile, &recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
     }
 
     CloseHandle(myFile);
@@ -263,11 +258,6 @@ bool DepositDatabase::save() {
 
 // Открыть запись для чтения
 bool DepositDatabase::record(HANDLE hPipe){
-    /*
-    1. Сервер получет id
-    2. Cервер возвращает запись
-    */
-
     unsigned int tempID;
     ReadFile(hPipe, (LPVOID)&tempID, sizeof(tempID), &bytesRead, NULL);
 
@@ -276,31 +266,28 @@ bool DepositDatabase::record(HANDLE hPipe){
     while (i != database.end() && i->id != tempID)
         ++i;
 
-//    if (i == database.end())
-//        return 0;
-
-    Deposit::D d = Deposit::toStruct(*i);
+    DepositCPY recordCPY = toStruct(*i);
 
     // id
-    WriteFile(hPipe, &d.id, sizeof(d.id), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.id, sizeof(recordCPY.id), &bytesRead, NULL);
     // Номер счета
-    WriteFile(hPipe, &d.accountNumber, sizeof(d.accountNumber), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
     // Тип вклада
-    WriteFile(hPipe, &d.type, sizeof(d.type), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
     // ФИ
-    WriteFile(hPipe, &d.FIO, sizeof(d.FIO), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
     // Дата рождения
-    WriteFile(hPipe, &d.birthDate, sizeof(d.birthDate), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
     // Сумма вклада
-    WriteFile(hPipe, &d.amount, sizeof(d.amount), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
     // Процент вклада
-    WriteFile(hPipe, &d.interest, sizeof(d.interest), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
     // Переодичность начисления
-    WriteFile(hPipe, &d.accrualFrequency, sizeof(d.accrualFrequency), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
     // Последняя транзакция
-    WriteFile(hPipe, &d.lastTransaction, sizeof(d.lastTransaction), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
     // Наличие пластиковой карты
-    WriteFile(hPipe, &d.plasticCardAvailability, sizeof(d.plasticCardAvailability), &bytesRead, NULL);
+    WriteFile(hPipe, &recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
     return 1;
 }
@@ -308,7 +295,7 @@ bool DepositDatabase::record(HANDLE hPipe){
 // Возвратить вектор записей
 bool DepositDatabase::records(HANDLE hPipe){
     QVector<Deposit>::iterator i;
-    Deposit::D d;
+    DepositCPY recordCPY;
 
     int count = database.count();
     if (!WriteFile(hPipe, (LPVOID)&count, sizeof(count), &bytesWritten, NULL)) {
@@ -317,11 +304,11 @@ bool DepositDatabase::records(HANDLE hPipe){
     }
 
     for (i = database.begin(); i != database.end(); ++i) {
-        d = Deposit::toStruct(*i);
+        recordCPY = toStruct(*i);
 
-        WriteFile(hPipe, (LPVOID)&d.id, sizeof(d.id), &bytesWritten, NULL);
-        WriteFile(hPipe, (LPVOID)&d.accountNumber, sizeof(d.accountNumber), &bytesWritten, NULL);
-        WriteFile(hPipe, (LPVOID)&d.amount, sizeof(d.amount), &bytesWritten, NULL);
+        WriteFile(hPipe, (LPVOID)&recordCPY.id, sizeof(recordCPY.id), &bytesWritten, NULL);
+        WriteFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesWritten, NULL);
+        WriteFile(hPipe, (LPVOID)&recordCPY.amount, sizeof(recordCPY.amount), &bytesWritten, NULL);
     }
     qDebug() << "Writting to chanel successfuly" ;
 
@@ -331,12 +318,6 @@ bool DepositDatabase::records(HANDLE hPipe){
 // Кол-во элементов
 bool DepositDatabase::count(HANDLE hPipe) {
     int count = database.count();
-
-//    intToBuffer(count, buffer);
-//    if (!WriteFile(hPipe, (LPVOID)&buffer, sizeof(buffer), &bytesWritten, NULL)) {
-//        qDebug() << "Error writing to channel: " << GetLastError();
-//        return 0;
-//    }
 
     if (!WriteFile(hPipe, (LPVOID)&count, sizeof(int), &bytesWritten, NULL)) {
         qDebug() << "Error writing to channel: " << GetLastError();
@@ -350,26 +331,4 @@ bool DepositDatabase::count(HANDLE hPipe) {
 // Уничтожение всех данных
 void DepositDatabase::clear() {
     database.clear();
-}
-
-DepositDatabase::RecordRow DepositDatabase::toRecord(Deposit::D d) {
-    DepositDatabase::RecordRow rr;
-
-    rr.id = d.id;
-    rr.amount = d.amount;
-    rr.accountNumber = QString::fromStdString(d.accountNumber);
-
-    return rr;
-}
-
-Deposit::D DepositDatabase::fromRecord(DepositDatabase::RecordRow rr) {
-    Deposit::D d;
-
-    d.id = rr.id;
-    d.amount = rr.amount;
-
-    QByteArray stringData = rr.accountNumber.toUtf8();
-    std::copy(stringData.constBegin(), stringData.constBegin()+qMin(20, stringData.size()), d.accountNumber);
-
-    return d;
 }

@@ -5,6 +5,19 @@
 #include <QFile>
 #include <QDataStream>
 
+struct DepositCPY {
+    unsigned int id;                // id
+    char accountNumber[21];         // Номер счета
+    int type;                       // Тип вклада
+    char FIO[45];                   // ФИО
+    char birthDate[11];             // Дата рождения
+    double amount;                  // Сумма вклада
+    double interest;                // Процент вклада
+    int accrualFrequency;           // Переодичность начисления
+    char lastTransaction[11];       // Последняя транзакция
+    bool plasticCardAvailability;   // Наличие пластиковой карты
+};
+
 class Deposit
 {
 
@@ -21,20 +34,6 @@ public:
     int accrualFrequency;           // Переодичность начисления
     QDate lastTransaction;          // Последняя транзакция
     bool plasticCardAvailability;   // Наличие пластиковой карты
-
-
-    struct D {
-        unsigned int id;                // id
-        char accountNumber[21];         // Номер счета
-        int type;                       // Тип вклада
-        char FIO[45];                   // ФИО
-        char birthDate[11];             // Дата рождения
-        double amount;                  // Сумма вклада
-        double interest;                // Процент вклада
-        int accrualFrequency;           // Переодичность начисления
-        char lastTransaction[11];       // Последняя транзакция
-        bool plasticCardAvailability;   // Наличие пластиковой карты
-    };
 
     bool operator>(const Deposit& d) const {
         if (d.type != type)
@@ -82,88 +81,6 @@ public:
             >> d.plasticCardAvailability;
 
         return in;
-    }
-
-    static D toStruct(Deposit &deposit){
-        D d;
-        QByteArray stringData;
-
-        // id
-        d.id = deposit.id;
-
-        // Номер счета
-        stringData = deposit.accountNumber.toUtf8();
-        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(20, stringData.size()), d.accountNumber);
-        d.accountNumber[qMin(21, stringData.size())] = '\0';
-
-        // ФИО
-        stringData = deposit.FIO.toUtf8();
-        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(45, stringData.size()), d.FIO);
-        d.FIO[qMin(45, stringData.size())] = '\0';
-
-        // Тип вклада
-        d.type = deposit.type;
-
-        // Дата рождения
-        stringData = deposit.birthDate.toString("dd.MM.yyyy").toUtf8();
-        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(10, stringData.size()), d.birthDate);
-        d.birthDate[qMin(11, stringData.size())] = '\0';
-
-
-        // Сумма вклада
-        d.amount = deposit.amount;
-
-        // Процент вклада
-        d.interest = deposit.interest;
-
-        // Переодичность начисления
-        d.accrualFrequency = deposit.accrualFrequency;
-
-        // Последняя транзакция
-        stringData = deposit.lastTransaction.toString("dd.MM.yyyy").toUtf8();
-        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(10, stringData.size()), d.lastTransaction);
-        d.lastTransaction[qMin(11, stringData.size())] = '\0';
-
-        // Наличие пластиковой карты
-        d.plasticCardAvailability = deposit.plasticCardAvailability;
-
-        return d;
-    }
-
-    static Deposit fromStruct(D &d) {
-        Deposit deposit;
-
-        // id
-        deposit.id = d.id;
-
-        // Номер счета
-        deposit.accountNumber = QString::fromStdString(d.accountNumber);
-
-        // ФИО
-        deposit.FIO = QString::fromStdString(d.FIO);
-
-        // Тип вклада
-        deposit.type = d.type;
-
-        // Дата рождения
-        deposit.birthDate = QDate::fromString(QString::fromStdString(d.birthDate), "dd.MM.yyyy");
-
-        // Сумма вклада
-        deposit.amount = d.amount;
-
-        // Процент вклада
-        deposit.interest = d.interest;
-
-        // Переодичность начисления
-        deposit.accrualFrequency = d.accrualFrequency;
-
-        // Последняя транзакция
-        deposit.lastTransaction = QDate::fromString(QString::fromStdString(d.lastTransaction), "dd.MM.yyyy");
-
-        // Наличие пластиковой карты
-        deposit.plasticCardAvailability = d.plasticCardAvailability;
-
-        return deposit;
     }
 };
 
