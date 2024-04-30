@@ -10,13 +10,11 @@ CONFIG += c++17 cmdline
 SOURCES += \
         main.cpp \
         deposit.cpp \
-        depositDatabase.cpp \
-        randomrecord.cpp
+        depositDatabase.cpp
 
 HEADERS += \
         deposit.h \
-        depositDatabase.h \
-        randomrecord.h
+        depositDatabase.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
