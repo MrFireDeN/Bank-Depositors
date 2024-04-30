@@ -88,14 +88,10 @@ bool DepositDatabase::remove(HANDLE hPipe) {
 }
 
 bool DepositDatabase::update(HANDLE hPipe) {
-    if (!remove(hPipe)){
-        return 0;
-    }
-
     DepositCPY recordCPY;
 
     // id
-    //ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
+    ReadFile(hPipe, (LPVOID)&recordCPY.id, sizeof(recordCPY.id), &bytesRead, NULL);
     // Номер счета
     ReadFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
     // Тип вклада
@@ -116,7 +112,17 @@ bool DepositDatabase::update(HANDLE hPipe) {
     ReadFile(hPipe, (LPVOID)&recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
     Deposit record = fromStruct(recordCPY);
-    pos = add(record);
+
+    QVector <Deposit>::const_iterator i;
+
+    for (i = database.constBegin(); i != database.constEnd(); ++i) {
+        if (i->id == record.id) {
+                database.erase(i);
+                pos = add(record);
+                break;
+        }
+    }
+
 
     WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
 
