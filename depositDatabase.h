@@ -1,5 +1,5 @@
-#ifndef RECORD_H
-#define RECORD_H
+#ifndef DEPOSITDATABASE_H
+#define DEPOSITDATABASE_H
 
 #include <QVector>
 #include <QFile>
@@ -142,4 +142,4 @@ private:
     }
 };
 
-#endif // RECORD_H
+#endif // DEPOSITDATABASE_H
