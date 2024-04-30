@@ -84,8 +84,6 @@ void MainWindow::updateFiles()
 
     openFile();
 
-    showRecords();
-
     deposit = currentRecord;
     showDeposit(deposit);
 
