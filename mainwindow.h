@@ -39,6 +39,7 @@ private slots:
     int whichRadioButtonChecked(QList <QRadioButton*>);
     void setUIEnabled(bool);
     void addRow(Deposit&, int);
+    void showRecords();
 
     void on_depositAmountNumber_valueChanged(double);
     void on_recordSave_clicked();

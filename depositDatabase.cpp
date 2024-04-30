@@ -7,9 +7,6 @@ DepositDatabase::DepositDatabase()
 
 // Подключение к серверу
 bool DepositDatabase::connect() {
-    ZeroMemory( &si, sizeof(si) );
-    si.cb = sizeof(si);
-
     hPipe = CreateFile(
         SERVERPIPE,                     // Имя канала
         GENERIC_READ | GENERIC_WRITE,   // Доступ к чтению и записи
@@ -76,10 +73,7 @@ int DepositDatabase::append(Deposit& record) {
     // Наличие пластиковой карты
     WriteFile(hPipe, &recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
-    record = fromStruct(recordCPY);
-
-    ReadFile(hPipe, (void*)&id, sizeof(id), &bytesRead, NULL);
-    record.id = id;
+    ReadFile(hPipe, (void*)&record.id, sizeof(record.id), &bytesRead, NULL);
     ReadFile(hPipe, (void*)&pos, sizeof(pos), &bytesRead, NULL);
 
     return pos;
@@ -245,7 +239,7 @@ int DepositDatabase::count() {
         CloseHandle(hPipe);
         return 0;
     }
-    qDebug() << "Written in channel: " << buffer;
+    qDebug() << "Written in channel: " << bytesWritten;
 
     // Пример чтения из канала
     int count;

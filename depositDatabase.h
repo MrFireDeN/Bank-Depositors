@@ -8,8 +8,6 @@
 #include <QDate>
 #include <QDataStream>
 #include <Windows.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 class DepositDatabase
 {
@@ -36,7 +34,6 @@ public:
     bool isModified() const;
 
 private:
-    const LPCTSTR SERVERNAME = TEXT("server\\bankserver.exe");
     const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 
     const DWORD
@@ -49,15 +46,9 @@ private:
         COUNT_REQ   = 6,
         UPDATE_REQ  = 7;
 
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
     HANDLE hPipe;
     DWORD mode, bytesWritten, bytesRead;
-    char buffer[1024];
-    int bufferSize = 1024;
     int req, pos;
-
-    unsigned int id;
 
     RecordRow toRecord(DepositCPY recordCPY) {
         RecordRow rr;
@@ -67,19 +58,6 @@ private:
         rr.accountNumber = QString::fromStdString(recordCPY.accountNumber);
 
         return rr;
-    }
-
-    DepositCPY fromRecord(RecordRow rr) {
-        DepositCPY recordCPY;
-
-        recordCPY.id = rr.id;
-        recordCPY.amount = rr.amount;
-
-        QByteArray stringData = rr.accountNumber.toUtf8();
-        std::copy(stringData.constBegin(), stringData.constBegin()+qMin(20, stringData.size()), recordCPY.accountNumber);
-        recordCPY.accountNumber[qMin(20, stringData.size())] = '\0';
-
-        return recordCPY;
     }
 
     static DepositCPY toStruct(Deposit &record) {

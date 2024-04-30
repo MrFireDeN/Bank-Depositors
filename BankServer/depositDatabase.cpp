@@ -21,8 +21,6 @@ DepositDatabase::~DepositDatabase() {
 bool DepositDatabase::append(HANDLE hPipe) {
     DepositCPY recordCPY;
 
-    // id
-    //ReadFile(hPipe, (LPVOID)&record.id, sizeof(record.id), &bytesRead, NULL);
     // Номер счета
     ReadFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
     // Тип вклада
@@ -263,8 +261,8 @@ bool DepositDatabase::record(HANDLE hPipe){
 
     QVector<Deposit>::iterator i = database.begin();
 
-    while (i != database.end() && i->id != tempID)
-        ++i;
+    while (i != database.end()-1 && i->id != tempID)
+        i++;
 
     DepositCPY recordCPY = toStruct(*i);
 
@@ -274,7 +272,7 @@ bool DepositDatabase::record(HANDLE hPipe){
     WriteFile(hPipe, &recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
     // Тип вклада
     WriteFile(hPipe, &recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
-    // ФИ
+    // ФИО
     WriteFile(hPipe, &recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
     // Дата рождения
     WriteFile(hPipe, &recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
