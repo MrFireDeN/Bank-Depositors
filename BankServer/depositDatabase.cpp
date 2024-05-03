@@ -2,10 +2,6 @@
 
 DepositDatabase::DepositDatabase()
 {
-    setlocale(LC_ALL, "Russian");
-    SetConsoleCP(CP_UTF8);
-    SetConsoleOutputCP(CP_UTF8);
-
     // Считать данные из файла
     if (!load()) {
         qDebug() << "Ошибка при загрузке базы данных: " << GetLastError();
