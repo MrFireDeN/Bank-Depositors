@@ -34,6 +34,7 @@ public:
     bool isModified() const;
 
 private:
+    const LPCTSTR SERVERNAME = TEXT("server\\bankserver.exe");
     const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 
     const DWORD
@@ -46,6 +47,8 @@ private:
         COUNT_REQ   = 6,
         UPDATE_REQ  = 7;
 
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
     HANDLE hPipe;
     DWORD mode, bytesWritten, bytesRead;
     int req, pos;

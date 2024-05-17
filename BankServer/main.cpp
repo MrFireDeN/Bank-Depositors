@@ -6,15 +6,8 @@
 const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 DepositDatabase* dd;
 
-// Констуктор функий
+// Обслуживание клиента
 DWORD WINAPI handleClient(HANDLE);
-BOOL WINAPI ConsoleCtrlHandler(DWORD);
-DWORD WINAPI saveDataPeriodically(LPVOID);
-
-HANDLE hSaveThread;
-
-// Создание критических секций
-CRITICAL_SECTION TOTAL_BLOCK;
 
 int main(int argc, char *argv[])
 {
@@ -26,17 +19,8 @@ int main(int argc, char *argv[])
 
     dd = new DepositDatabase();
 
-    // Инициализировать объект критической секции
-    InitializeCriticalSection(&TOTAL_BLOCK);
-
-    // Установка обработчика событий консоли
-    SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
-
-    // Создание потока для периодического сохранения данных
-    hSaveThread = CreateThread(NULL, 0, saveDataPeriodically, NULL, 0, NULL);
-
     // Создание именованного канала для приема подключений
-    HANDLE hServerPipe = CreateNamedPipe(
+    HANDLE hPipe = CreateNamedPipe(
         SERVERPIPE,
         PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
@@ -47,54 +31,28 @@ int main(int argc, char *argv[])
         NULL
         );
 
-    if (hServerPipe == INVALID_HANDLE_VALUE) {
+    if (hPipe == INVALID_HANDLE_VALUE) {
         qDebug() << "Ошибка создания канала: " << GetLastError();
         return 0;
     }
     qDebug() << "Именованный канал успешно создан.\n";
 
-    // Цикл подключения клиентов
-    while (true) {
-        // Ожидание соединения
-        if (!ConnectNamedPipe(hServerPipe, NULL)) {
-            qDebug() << "Ошибка при ожидании подключения: " << GetLastError();
-            CloseHandle(hServerPipe);
-            return 0;
-        }
-        qDebug() << "Успешное подключение.\n";
+    // Ожидание соединения
+    if (!ConnectNamedPipe(hPipe, NULL)) {
+        qDebug() << "Ошибка при ожидании подключения: " << GetLastError();
+        CloseHandle(hPipe);
+        return 0;
+    }
+    qDebug() << "Успешное подключение.\n";
 
-        // Создание потока для обслуживания клиента
-        CreateThread(NULL, 0, handleClient, hServerPipe, 0, NULL);
-
-        QThread::sleep(1);
-        qDebug() << "Ожидание следующего клиента.\n";
-
-        // Создание именованного канала для приема подключений
-        hServerPipe = CreateNamedPipe(
-            SERVERPIPE,
-            PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            PIPE_UNLIMITED_INSTANCES,
-            1024,
-            1024,
-            5000,
-            NULL
-            );
-
-        if (hServerPipe == INVALID_HANDLE_VALUE) {
-            qDebug() << "Ошибка создания канала: " << GetLastError();
-            return 0;
-        }
-        qDebug() << "Именованный канал успешно создан.\n";
+    if (handleClient(hPipe)) {
+        QCoreApplication::quit();
     }
 
-    QCoreApplication::quit();
     return a.exec();
 }
 
-DWORD WINAPI handleClient(HANDLE pipe) {
-    HANDLE hClientPipe = (HANDLE)pipe;
-
+DWORD WINAPI handleClient(HANDLE hPipe) {
     const DWORD
         FINISH_REQ  = 0,
         APPEND_REQ  = 1,
@@ -110,22 +68,19 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
     do {
         // Загрузка номера запроса
-        ReadFile(hClientPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
+        ReadFile(hPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
         qDebug() << req;
-
-        // Установить полную блокировку
-        EnterCriticalSection(&TOTAL_BLOCK);
 
         switch (req) {
 
         // Выполнить добавление записи
         case APPEND_REQ:
-            dd->append(hClientPipe);
+            dd->append(hPipe);
             break;
 
         // Выполнить удаление записи
         case REMOVE_REQ:
-            dd->remove(hClientPipe);
+            dd->remove(hPipe);
             break;
 
         // Выполнить сохранение записей
@@ -135,76 +90,27 @@ DWORD WINAPI handleClient(HANDLE pipe) {
 
         // Выпонить возвращение записи
         case RECORD_REQ:
-            dd->record(hClientPipe);
+            dd->record(hPipe);
             break;
 
         // Выполнить возвращение вектора записей
         case RECORDS_REQ:
-            dd->records(hClientPipe);
+            dd->records(hPipe);
             break;
 
         // Выполнить возвращение кол-во записей
         case COUNT_REQ:
-            dd->count(hClientPipe);
+            dd->count(hPipe);
             break;
 
         // Выполнить обновление записи
         case UPDATE_REQ:
-            dd->update(hClientPipe);
+            dd->update(hPipe);
             break;
         }
-
-        // Пауза для проверки работы
-        Sleep(1000);
-
-        // Снять полную блокировку
-        LeaveCriticalSection(&TOTAL_BLOCK);
     } while (req != FINISH_REQ);
 
     qDebug() << "Отключение успешно.\n";
-    CloseHandle(hClientPipe);
-
+    CloseHandle(hPipe);
     return TRUE;
-}
-
-BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType) {
-    switch (dwCtrlType) {
-    case CTRL_CLOSE_EVENT:
-        // Установить полную блокировку
-        EnterCriticalSection(&TOTAL_BLOCK);
-
-        delete(dd);
-
-        // Удалить объект критической секции
-        DeleteCriticalSection(&TOTAL_BLOCK);
-
-        // Снять полную блокировку
-        //LeaveCriticalSection(&TOTAL_BLOCK);
-
-        // Ожидание завершения работы потока
-        WaitForSingleObject(hSaveThread, INFINITE);
-        CloseHandle(hSaveThread);
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
-DWORD WINAPI saveDataPeriodically(LPVOID lpParam) {
-    while (true) {
-        // Установить полную блокировку
-        EnterCriticalSection(&TOTAL_BLOCK);
-
-        // Сохранение данных
-        dd->save();
-        qDebug() << "Данные сохранены.";
-
-        // Снять полную блокировку
-        LeaveCriticalSection(&TOTAL_BLOCK);
-
-        // Подождать 15 секунд
-        Sleep(15000); // 15 секунд в миллисекундах
-    }
-
-    return 0;
 }
