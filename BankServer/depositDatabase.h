@@ -22,14 +22,14 @@ public:
         double amount; // сумма счета
     };
 
-    bool append(HANDLE);
-    bool remove(HANDLE);
-    bool update(HANDLE);
+    bool append(SOCKET);
+    bool remove(SOCKET);
+    bool update(SOCKET);
     bool load();
     bool save();
-    bool record(HANDLE);
-    bool records(HANDLE);
-    bool count(HANDLE);
+    bool record(SOCKET);
+    bool records(SOCKET);
+    bool count(SOCKET);
     void clear();
     bool isModified() const;
 

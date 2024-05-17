@@ -1,13 +1,21 @@
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
 #include <QCoreApplication>
 #include <depositDatabase.h>
 #include <clocale>
 #include <Windows.h>
+#include <ws2tcpip.h>
+
 
 const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 DepositDatabase* dd;
 
+WORD wVersionRequested;
+WSADATA wsaData;
+int err;
+
 // Обслуживание клиента
-DWORD WINAPI handleClient(HANDLE);
+DWORD WINAPI handleClient(LPVOID);
 
 int main(int argc, char *argv[])
 {
@@ -17,42 +25,55 @@ int main(int argc, char *argv[])
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
+    wVersionRequested = MAKEWORD(2, 2);
+
+    err = WSAStartup(wVersionRequested, &wsaData);
+    if (err != 0) {
+        qDebug() << "Ошибка в WSAStartup: " << err;
+        return 0;
+    }
+
     dd = new DepositDatabase();
 
-    // Создание именованного канала для приема подключений
-    HANDLE hPipe = CreateNamedPipe(
-        SERVERPIPE,
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
-        1024,
-        1024,
-        5000,
-        NULL
-        );
+    SOCKET sock, kl_sock1;
+    int size;
 
-    if (hPipe == INVALID_HANDLE_VALUE) {
-        qDebug() << "Ошибка создания канала: " << GetLastError();
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in sain;
+    sain.sin_family = AF_INET;
+    sain.sin_port = htons(52000);
+    sain.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sock, (sockaddr *)&sain, sizeof(sain)) == SOCKET_ERROR) {
+        qDebug() << "Ошибка при привязке сокета: " << WSAGetLastError();
+        closesocket(sock);
+        WSACleanup();
         return 0;
     }
-    qDebug() << "Именованный канал успешно создан.\n";
+    qDebug() << "Сокет привязан успешно!";
 
-    // Ожидание соединения
-    if (!ConnectNamedPipe(hPipe, NULL)) {
-        qDebug() << "Ошибка при ожидании подключения: " << GetLastError();
-        CloseHandle(hPipe);
-        return 0;
-    }
-    qDebug() << "Успешное подключение.\n";
+    while (1)
+    {
+        listen(sock, 5);
+        size = sizeof(sain);
+        kl_sock1 = accept(sock, (sockaddr *)&sain, &size);
+        if (kl_sock1 == INVALID_SOCKET) {
+            qDebug() << "Ошибка при принятии соединения: " << WSAGetLastError();
+            continue;
+        }
+        qDebug() << "Соединение принято успешно!";
 
-    if (handleClient(hPipe)) {
-        QCoreApplication::quit();
+        CreateThread(NULL, 0, handleClient, (LPVOID)(uintptr_t)kl_sock1, 0, NULL);
     }
+
+    WSACleanup();
 
     return a.exec();
 }
 
-DWORD WINAPI handleClient(HANDLE hPipe) {
+DWORD WINAPI handleClient(LPVOID lpParam) {
+    SOCKET sock = (SOCKET)(uintptr_t)lpParam;
+
     const DWORD
         FINISH_REQ  = 0,
         APPEND_REQ  = 1,
@@ -63,24 +84,23 @@ DWORD WINAPI handleClient(HANDLE hPipe) {
         COUNT_REQ   = 6,
         UPDATE_REQ  = 7;
 
-    int req;
-    DWORD bytesRead;
+    short int req;
 
     do {
         // Загрузка номера запроса
-        ReadFile(hPipe, (LPVOID)&req, sizeof(int), &bytesRead, NULL);
-        qDebug() << req;
+        recv(sock, (char*)&req, sizeof(req), 0);
+        req = ntohs(req);
 
         switch (req) {
 
         // Выполнить добавление записи
         case APPEND_REQ:
-            dd->append(hPipe);
+            dd->append(sock);
             break;
 
         // Выполнить удаление записи
         case REMOVE_REQ:
-            dd->remove(hPipe);
+            dd->remove(sock);
             break;
 
         // Выполнить сохранение записей
@@ -90,27 +110,27 @@ DWORD WINAPI handleClient(HANDLE hPipe) {
 
         // Выпонить возвращение записи
         case RECORD_REQ:
-            dd->record(hPipe);
+            dd->record(sock);
             break;
 
         // Выполнить возвращение вектора записей
         case RECORDS_REQ:
-            dd->records(hPipe);
+            dd->records(sock);
             break;
 
         // Выполнить возвращение кол-во записей
         case COUNT_REQ:
-            dd->count(hPipe);
+            dd->count(sock);
             break;
 
         // Выполнить обновление записи
         case UPDATE_REQ:
-            dd->update(hPipe);
+            dd->update(sock);
             break;
         }
     } while (req != FINISH_REQ);
 
     qDebug() << "Отключение успешно.\n";
-    CloseHandle(hPipe);
+    closesocket(sock);
     return TRUE;
 }
