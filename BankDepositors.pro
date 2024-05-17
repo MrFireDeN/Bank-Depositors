@@ -24,6 +24,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
+LIBS += C:\Qt\6.7.0\mingw_64\lib\WS2_32.Lib
+LIBS += -lws2_32
+
 SOURCES += \
         deposit.cpp \
         depositDatabase.cpp \

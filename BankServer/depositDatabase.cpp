@@ -17,32 +17,6 @@ DepositDatabase::~DepositDatabase() {
 bool DepositDatabase::append(SOCKET sock) {
     DepositCPY recordCPY;
 
-    // // Номер счета
-    // ReadFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
-    // // Тип вклада
-    // ReadFile(hPipe, (LPVOID)&recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
-    // // ФИО
-    // ReadFile(hPipe, (LPVOID)&recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
-    // // Дата рождения
-    // ReadFile(hPipe, (LPVOID)&recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
-    // // Сумма вклада
-    // ReadFile(hPipe, (LPVOID)&recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
-    // // Процент вклада
-    // ReadFile(hPipe, (LPVOID)&recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
-    // // Переодичность начисления
-    // ReadFile(hPipe, (LPVOID)&recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
-    // // Последняя транзакция
-    // ReadFile(hPipe, (LPVOID)&recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
-    // // Наличие пластиковой карты
-    // ReadFile(hPipe, (LPVOID)&recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
-
-    // Deposit record = fromStruct(recordCPY);
-    // record.id = ++id;
-    // pos = add(record);
-
-    // WriteFile(hPipe, (LPCVOID)&record.id, sizeof(unsigned int), &bytesWritten, NULL);
-    // WriteFile(hPipe, (LPCVOID)&pos, sizeof(int), &bytesWritten, NULL);
-
     recv(sock, (char*)&recordCPY, sizeof(recordCPY), 0);
 
     Deposit record = fromStruct(recordCPY);
@@ -78,7 +52,6 @@ int DepositDatabase::add(const Deposit& record) {
 // Удаленить элемент из базы данных
 bool DepositDatabase::remove(SOCKET sock) {
     unsigned int tempID;
-    //ReadFile(hPipe, (LPVOID)&tempID, sizeof(tempID), &bytesRead, NULL);
     recv(sock, (char*)&tempID, sizeof(tempID), 0);
 
     QVector <Deposit>::const_iterator i;
@@ -95,27 +68,6 @@ bool DepositDatabase::remove(SOCKET sock) {
 
 bool DepositDatabase::update(SOCKET sock) {
     DepositCPY recordCPY;
-
-    // // id
-    // ReadFile(hPipe, (LPVOID)&recordCPY.id, sizeof(recordCPY.id), &bytesRead, NULL);
-    // // Номер счета
-    // ReadFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
-    // // Тип вклада
-    // ReadFile(hPipe, (LPVOID)&recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
-    // // ФИО
-    // ReadFile(hPipe, (LPVOID)&recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
-    // // Дата рождения
-    // ReadFile(hPipe, (LPVOID)&recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
-    // // Сумма вклада
-    // ReadFile(hPipe, (LPVOID)&recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
-    // // Процент вклада
-    // ReadFile(hPipe, (LPVOID)&recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
-    // // Переодичность начисления
-    // ReadFile(hPipe, (LPVOID)&recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
-    // // Последняя транзакция
-    // ReadFile(hPipe, (LPVOID)&recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
-    // // Наличие пластиковой карты
-    // ReadFile(hPipe, (LPVOID)&recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
     recv(sock, (char*)&recordCPY, sizeof(recordCPY), 0);
 
@@ -155,7 +107,6 @@ bool DepositDatabase::load() {
     // Очищаем локальную базу перед загрузкой
     database.clear();
 
-    //QVector<Deposit>::iterator i;
     DepositCPY recordCPY;
     DWORD bytesRead;
     int counts;
@@ -269,7 +220,6 @@ bool DepositDatabase::save() {
 // Открыть запись для чтения
 bool DepositDatabase::record(SOCKET sock){
     unsigned int tempID;
-    //ReadFile(hPipe, (LPVOID)&tempID, sizeof(tempID), &bytesRead, NULL);
     recv(sock, (char*)&tempID, sizeof(tempID), 0);
 
     QVector<Deposit>::iterator i = database.begin();
@@ -278,27 +228,6 @@ bool DepositDatabase::record(SOCKET sock){
         i++;
 
     DepositCPY recordCPY = toStruct(*i);
-
-    // // id
-    // WriteFile(hPipe, &recordCPY.id, sizeof(recordCPY.id), &bytesRead, NULL);
-    // // Номер счета
-    // WriteFile(hPipe, &recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesRead, NULL);
-    // // Тип вклада
-    // WriteFile(hPipe, &recordCPY.type, sizeof(recordCPY.type), &bytesRead, NULL);
-    // // ФИО
-    // WriteFile(hPipe, &recordCPY.FIO, sizeof(recordCPY.FIO), &bytesRead, NULL);
-    // // Дата рождения
-    // WriteFile(hPipe, &recordCPY.birthDate, sizeof(recordCPY.birthDate), &bytesRead, NULL);
-    // // Сумма вклада
-    // WriteFile(hPipe, &recordCPY.amount, sizeof(recordCPY.amount), &bytesRead, NULL);
-    // // Процент вклада
-    // WriteFile(hPipe, &recordCPY.interest, sizeof(recordCPY.interest), &bytesRead, NULL);
-    // // Переодичность начисления
-    // WriteFile(hPipe, &recordCPY.accrualFrequency, sizeof(recordCPY.accrualFrequency), &bytesRead, NULL);
-    // // Последняя транзакция
-    // WriteFile(hPipe, &recordCPY.lastTransaction, sizeof(recordCPY.lastTransaction), &bytesRead, NULL);
-    // // Наличие пластиковой карты
-    // WriteFile(hPipe, &recordCPY.plasticCardAvailability, sizeof(recordCPY.plasticCardAvailability), &bytesRead, NULL);
 
     // Отправка данных обратно клиенту
     send(sock, (char*)&recordCPY, sizeof(recordCPY), 0);
@@ -312,18 +241,10 @@ bool DepositDatabase::records(SOCKET sock){
     DepositCPY recordCPY;
 
     int count = database.count();
-    // if (!WriteFile(hPipe, (LPVOID)&count, sizeof(count), &bytesWritten, NULL)) {
-    //     qDebug() << "Error writing to channel: " << GetLastError();
-    //     return 0;
-    // }
     send(sock, (char*)&count, sizeof(count), 0);
 
     for (i = database.begin(); i != database.end(); ++i) {
         recordCPY = toStruct(*i);
-
-        // WriteFile(hPipe, (LPVOID)&recordCPY.id, sizeof(recordCPY.id), &bytesWritten, NULL);
-        // WriteFile(hPipe, (LPVOID)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), &bytesWritten, NULL);
-        // WriteFile(hPipe, (LPVOID)&recordCPY.amount, sizeof(recordCPY.amount), &bytesWritten, NULL);
         send(sock, (char*)&recordCPY.id, sizeof(recordCPY.id), 0);
         send(sock, (char*)&recordCPY.accountNumber, sizeof(recordCPY.accountNumber), 0);
         send(sock, (char*)&recordCPY.amount, sizeof(recordCPY.amount), 0);

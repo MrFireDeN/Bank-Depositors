@@ -1,6 +1,9 @@
 #ifndef DEPOSITDATABASE_H
 #define DEPOSITDATABASE_H
 
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+
 #include <QVector>
 #include <QFile>
 #include "deposit.h"
@@ -8,6 +11,7 @@
 #include <QDate>
 #include <QDataStream>
 #include <Windows.h>
+#include <ws2tcpip.h>
 
 class DepositDatabase
 {
@@ -34,7 +38,6 @@ public:
     bool isModified() const;
 
 private:
-    const LPCTSTR SERVERNAME = TEXT("server\\bankserver.exe");
     const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 
     const DWORD
@@ -47,11 +50,9 @@ private:
         COUNT_REQ   = 6,
         UPDATE_REQ  = 7;
 
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    HANDLE hPipe;
-    DWORD mode, bytesWritten, bytesRead;
     int req, pos;
+
+    SOCKET sock = INVALID_SOCKET;
 
     RecordRow toRecord(DepositCPY recordCPY) {
         RecordRow rr;

@@ -38,11 +38,6 @@ private:
     int add(const Deposit& record);
 
     const LPCTSTR FILENAME = TEXT("main.dd");
-    const LPCTSTR SERVERNAME = TEXT("bankserver.exe");
-
-    DWORD mode, bytesWritten, bytesRead;
-    char buffer[1024];
-    int bufferSize = 1024;
     int req, pos;
 
     unsigned int id = 0;

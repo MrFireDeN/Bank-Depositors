@@ -6,8 +6,6 @@
 #include <Windows.h>
 #include <ws2tcpip.h>
 
-
-const LPCTSTR SERVERPIPE = TEXT("\\\\.\\pipe\\bankserver");
 DepositDatabase* dd;
 
 WORD wVersionRequested;
@@ -42,7 +40,7 @@ int main(int argc, char *argv[])
     sockaddr_in sain;
     sain.sin_family = AF_INET;
     sain.sin_port = htons(52000);
-    sain.sin_addr.s_addr = htonl(INADDR_ANY);
+    sain.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     if (bind(sock, (sockaddr *)&sain, sizeof(sain)) == SOCKET_ERROR) {
         qDebug() << "Ошибка при привязке сокета: " << WSAGetLastError();
@@ -84,12 +82,11 @@ DWORD WINAPI handleClient(LPVOID lpParam) {
         COUNT_REQ   = 6,
         UPDATE_REQ  = 7;
 
-    short int req;
+    int req;
 
     do {
         // Загрузка номера запроса
         recv(sock, (char*)&req, sizeof(req), 0);
-        req = ntohs(req);
 
         switch (req) {
 
